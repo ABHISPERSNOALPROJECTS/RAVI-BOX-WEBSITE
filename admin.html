@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — BoxCraft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Supabase CDN Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  :root{
+    --paper:#EDE3D0;
+    --paper-light:#F6F0E2;
+    --board:#B98A54;
+    --board-dark:#7A5230;
+    --ink:#211B14;
+    --stamp:#BF3B23;
+    --tape:#D9C08B;
+    --line:rgba(33,27,20,0.25);
+    --wa:#3FA047;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px;}
+  h1,h2,h3{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; letter-spacing:0.5px; line-height:1.02;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+  
+  header{
+    background:var(--paper-light);
+    border-bottom:2px dashed var(--board-dark);
+  }
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px; max-width:1180px; margin:0 auto;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Anton', sans-serif; font-size:22px; letter-spacing:0.5px;
+    text-decoration:none; color:var(--ink);
+  }
+  .logo .crate{
+    width:34px; height:34px; border:2.5px solid var(--ink); border-radius:3px;
+    position:relative; flex-shrink:0;
+  }
+  .logo .crate::before, .logo .crate::after{
+    content:""; position:absolute; background:var(--ink);
+  }
+  .logo .crate::before{ top:0; bottom:0; left:50%; width:2px; transform:translateX(-50%); }
+  .logo .crate::after{ left:0; right:0; top:50%; height:2px; transform:translateY(-50%); }
+  
+  .status-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600;
+    padding:6px 12px; border-radius:4px; border:2px solid var(--ink);
+  }
+  .status-live{ background:#d1e7dd; color:#0f5132; }
+  .status-mock{ background:#fff3cd; color:#664d03; }
+
+  /* Login screen */
+  .login-container{
+    max-width:400px; margin:80px auto; padding:32px;
+    background:var(--paper-light); border:2px solid var(--ink);
+    border-radius:6px; box-shadow:4px 4px 0 var(--ink);
+  }
+  .login-container h2{ font-size:28px; margin-bottom:24px; text-align:center;}
+  
+  .form-group{
+    display:flex; flex-direction:column; gap:6px; margin-bottom:18px;
+  }
+  .form-group label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:700; text-transform:uppercase; color:#5a503f;
+  }
+  .form-input{
+    border:2.5px solid var(--ink); border-radius:4px; padding:10px 12px;
+    font-family:'Work Sans', sans-serif; font-size:14px;
+    background:#fff; color:var(--ink); outline:none; width:100%;
+  }
+  .form-input:focus{ border-color:var(--board-dark); }
+  
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--stamp); color:#fff; font-family:'IBM Plex Mono', monospace;
+    font-weight:600; font-size:14px; text-transform:uppercase;
+    padding:12px; border:2px solid var(--ink); border-radius:4px;
+    box-shadow:3px 3px 0 var(--ink); cursor:pointer; width:100%;
+    transition:transform .15s, box-shadow .15s; margin-top:8px;
+  }
+  .btn:hover{ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink); }
+  .btn-logout{
+    width:auto; padding:8px 16px; margin:0; background:var(--ink); box-shadow:none;
+  }
+  .btn-logout:hover{ transform:none; box-shadow:none; opacity:0.9; }
+
+  .error-message{
+    color:var(--stamp); font-size:13px; font-weight:600; margin-top:12px; text-align:center;
+  }
+
+  /* Admin Dashboard Layout */
+  .dashboard-wrapper{
+    display:grid; grid-template-columns:240px 1fr; gap:36px; padding:40px 0;
+  }
+  .sidebar{
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .sidebar-tab{
+    padding:12px 16px; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:700;
+    text-transform:uppercase; border:2.5px solid var(--ink); border-radius:4px;
+    background:var(--paper-light); cursor:pointer; transition:background .15s;
+  }
+  .sidebar-tab.active{
+    background:var(--ink); color:var(--paper-light);
+  }
+  .sidebar-tab:hover:not(.active){
+    background:var(--board); color:#fff;
+  }
+
+  .main-content{
+    background:var(--paper-light); border:2.5px solid var(--ink); border-radius:6px;
+    padding:32px; min-height:500px;
+  }
+  
+  .dashboard-section{ display:none; }
+  .dashboard-section.active{ display:block; }
+  
+  .dashboard-section h2{
+    font-size:32px; margin-bottom:20px; border-bottom:2px dashed var(--line);
+    padding-bottom:12px;
+  }
+
+  /* Orders view table */
+  .table-wrapper{
+    width:100%; overflow-x:auto; margin-top:12px;
+  }
+  table{
+    width:100%; border-collapse:collapse; text-align:left; font-size:14px;
+  }
+  th, td{
+    padding:12px 14px; border-bottom:1.5px solid var(--line);
+  }
+  th{
+    font-family:'IBM Plex Mono', monospace; font-weight:700; text-transform:uppercase;
+    background:rgba(33, 27, 20, 0.05); font-size:12px;
+  }
+  tr:hover td{
+    background:rgba(33, 27, 20, 0.02);
+  }
+  
+  .badge{
+    display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:11px;
+    font-weight:700; padding:4px 8px; border-radius:3px; text-transform:uppercase;
+  }
+  .badge-pending{ background:#ffe69c; color:#664d03; }
+  .badge-completed{ background:#a3cfbb; color:#0f5132; }
+
+  .action-btn{
+    padding:6px 10px; font-family:'IBM Plex Mono', monospace; font-size:11px;
+    font-weight:600; border:1.5px solid var(--ink); border-radius:3px;
+    cursor:pointer; background:#fff; margin-right:4px;
+  }
+  .action-btn-complete{ background:var(--wa); color:#fff; }
+  .action-btn-delete{ background:var(--stamp); color:#fff; }
+  .action-btn:hover{ opacity:0.9; }
+
+  /* Product upload form */
+  .product-form-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:20px;
+  }
+  .span-2{
+    grid-column:span 2;
+  }
+  
+  @media (max-width:900px){
+    .dashboard-wrapper{ grid-template-columns:1fr; }
+    .sidebar{ flex-direction:row; flex-wrap:wrap; }
+    .sidebar-tab{ flex:1; text-align:center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="logo" href="home.html"><span class="crate"></span>BOXCRAFT <span style="font-size:12px; color:var(--stamp); font-weight:normal;">[ADMIN]</span></a>
+    
+    <div id="status-container">
+      <!-- Database status loaded dynamically -->
+    </div>
+  </nav>
+</header>
+
+<main class="wrap">
+  <!-- LOGIN CONTAINER -->
+  <div class="login-container" id="login-section">
+    <h2>Admin Login</h2>
+    <form id="login-form" onsubmit="event.preventDefault(); handleLogin();">
+      <div class="form-group">
+        <label for="login-email">Email Address</label>
+        <input class="form-input" type="email" id="login-email" required placeholder="admin@boxcraft.com">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input class="form-input" type="password" id="login-password" required placeholder="••••••••">
+      </div>
+      <button class="btn" type="submit">Sign In</button>
+      <div class="error-message" id="login-error"></div>
+    </form>
+  </div>
+
+  <!-- DASHBOARD CONTAINER (HIDDEN BY DEFAULT) -->
+  <div class="dashboard-wrapper" id="dashboard-section" style="display:none;">
+    <!-- Sidebar navigation -->
+    <div class="sidebar">
+      <div class="sidebar-tab active" onclick="switchTab('orders')">Orders Logs</div>
+      <div class="sidebar-tab" onclick="switchTab('upload')">Add Product</div>
+      <div class="sidebar-tab btn-logout" onclick="handleLogout()" style="color:#fff; text-align:center; margin-top:20px;">Logout</div>
+    </div>
+
+    <!-- Main Section -->
+    <div class="main-content">
+      <!-- Section: Orders -->
+      <div class="dashboard-section active" id="sec-orders">
+        <h2>Incoming Order Queries</h2>
+        <p style="font-size:14px; color:#5a503f; margin-bottom:18px;">List of all customized or standard preorder queries submitted by clients on the details page form.</p>
+        
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Dimensions (mm)</th>
+                <th>Qty</th>
+                <th>Board Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-list">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section: Upload Product -->
+      <div class="dashboard-section" id="sec-upload">
+        <h2>Add Box to Catalog</h2>
+        <p style="font-size:14px; color:#5a503f; margin-bottom:24px;">Upload a new cardboard box configuration. It will automatically reflect live on the website.</p>
+        
+        <form id="upload-form" onsubmit="event.preventDefault(); handleProductUpload();">
+          <div class="product-form-grid">
+            <div class="form-group">
+              <label for="prod-id">Product ID (Unique slug - lowercase, no spaces)</label>
+              <input class="form-input" type="text" id="prod-id" required placeholder="e.g. sweetbox">
+            </div>
+            
+            <div class="form-group">
+              <label for="prod-title">Product Title</label>
+              <input class="form-input" type="text" id="prod-title" required placeholder="e.g. Sweet Box">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-tag">Eyebrow Tag</label>
+              <input class="form-input" type="text" id="prod-tag" required placeholder="e.g. Sweet box">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-category">Size Category</label>
+              <select class="form-input" id="prod-category">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prod-dims">Default Dimensions (e.g. 200 × 200 × 80 mm)</label>
+              <input class="form-input" type="text" id="prod-dims" required placeholder="200 × 200 × 80 mm">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-price">Starting Price (e.g. ₹15)</label>
+              <input class="form-input" type="text" id="prod-price" required placeholder="₹15">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-moq">Minimum Order Quantity (MOQ)</label>
+              <input class="form-input" type="number" id="prod-moq" required placeholder="100">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-thickness">Default Board Thickness</label>
+              <select class="form-input" id="prod-thickness">
+                <option value="3-Ply Standard">3-Ply Standard</option>
+                <option value="5-Ply Heavy">5-Ply Heavy</option>
+                <option value="7-Ply Heavy Duty">7-Ply Heavy Duty</option>
+              </select>
+            </div>
+
+            <div class="form-group span-2">
+              <label for="prod-desc">Product Description</label>
+              <textarea class="form-input" id="prod-desc" required rows="3" placeholder="Write a short description about what this box is suitable for..."></textarea>
+            </div>
+
+            <div class="form-group span-2">
+              <label for="prod-specs">Specifications list (Write one specification per line)</label>
+              <textarea class="form-input" id="prod-specs" required rows="4" placeholder="e.g.&#10;3-ply corrugated board, 300 GSM&#10;Eco-friendly, 100% recyclable&#10;Tape-free flap closure"></textarea>
+            </div>
+
+            <div class="form-group span-2">
+              <label>Images URLs (Provide 3 high-res photo URLs)</label>
+              <input style="margin-bottom:6px;" class="form-input" type="url" id="prod-img-1" required placeholder="Image URL 1">
+              <input style="margin-bottom:6px;" class="form-input" type="url" id="prod-img-2" required placeholder="Image URL 2">
+              <input class="form-input" type="url" id="prod-img-3" required placeholder="Image URL 3">
+            </div>
+          </div>
+
+          <button class="btn" type="submit" style="width:240px; margin-top:28px;">Upload to Database</button>
+          <div id="upload-feedback" style="margin-top:12px; font-weight:600; font-size:14px;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  var supabase = null;
+  var isLive = false;
+
+  // Initialize Supabase if keys exist, else configure mock localstorage databases
+  function initSupabase() {
+    var statusBadge = document.getElementById("status-container");
+    if (typeof window.supabase !== 'undefined' && isSupabaseConfigured()) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      isLive = true;
+      statusBadge.innerHTML = '<span class="status-badge status-live">● DATABASE LIVE</span>';
+    } else {
+      isLive = false;
+      statusBadge.innerHTML = '<span class="status-badge status-mock">● MOCK LOCAL MODE</span>';
+      
+      // Seed default orders in LocalStorage if not present
+      if (!localStorage.getItem("mock_orders")) {
+        var defaultOrders = [
+          { id: 101, product_id: "mailer", product_title: "Mailer Box", length: 150, width: 100, height: 50, quantity: 150, board_type: "3-Ply Standard", status: "Pending" },
+          { id: 102, product_id: "shipping", product_title: "Shipping Carton", length: 300, width: 220, height: 180, quantity: 50, board_type: "5-Ply Heavy", status: "Completed" }
+        ];
+        localStorage.setItem("mock_orders", JSON.stringify(defaultOrders));
+      }
+    }
+  }
+
+  // Handle Admin Auth
+  async function handleLogin() {
+    var email = document.getElementById("login-email").value;
+    var password = document.getElementById("login-password").value;
+    var errorDiv = document.getElementById("login-error");
+    errorDiv.innerText = "";
+
+    if (isLive) {
+      // Live Supabase Authentication
+      var result = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (result.error) {
+        errorDiv.innerText = "Error: " + result.error.message;
+      } else {
+        showDashboard();
+      }
+    } else {
+      // Local Mock Mode Authentication (hardcoded)
+      if (email === "admin@boxcraft.com" && password === "boxcraft123") {
+        sessionStorage.setItem("mock_session", "true");
+        showDashboard();
+      } else {
+        errorDiv.innerText = "Error: Invalid credentials for mock login (Use admin@boxcraft.com / boxcraft123)";
+      }
+    }
+  }
+
+  // Handle Logout
+  async function handleLogout() {
+    if (isLive) {
+      await supabase.auth.signOut();
+    } else {
+      sessionStorage.removeItem("mock_session");
+    }
+    window.location.reload();
+  }
+
+  // Check login state on load
+  async function checkAuth() {
+    initSupabase();
+
+    if (isLive) {
+      var session = await supabase.auth.getSession();
+      if (session.data.session) {
+        showDashboard();
+      }
+    } else {
+      if (sessionStorage.getItem("mock_session") === "true") {
+        showDashboard();
+      }
+    }
+  }
+
+  // Display dashboard screen
+  function showDashboard() {
+    document.getElementById("login-section").style.display = "none";
+    document.getElementById("dashboard-section").style.display = "grid";
+    loadOrders();
+  }
+
+  // Navigation tabs switcher
+  function switchTab(tabId) {
+    document.querySelectorAll(".sidebar-tab").forEach(function(el) {
+      if (!el.classList.contains("btn-logout")) el.classList.remove("active");
+    });
+    document.querySelectorAll(".dashboard-section").forEach(function(el) {
+      el.classList.remove("active");
+    });
+
+    if (tabId === "orders") {
+      event.target.classList.add("active");
+      document.getElementById("sec-orders").classList.add("active");
+      loadOrders();
+    } else if (tabId === "upload") {
+      event.target.classList.add("active");
+      document.getElementById("sec-upload").classList.add("active");
+    }
+  }
+
+  // Load and display all orders
+  async function loadOrders() {
+    var tbody = document.getElementById("orders-list");
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading orders...</td></tr>';
+    
+    var orders = [];
+
+    if (isLive) {
+      var response = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (response.error) {
+        tbody.innerHTML = '<tr><td colspan="7" class="error-message">Failed to load orders: ' + response.error.message + '</td></tr>';
+        return;
+      }
+      orders = response.data;
+    } else {
+      orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
+    }
+
+    tbody.innerHTML = "";
+    if (orders.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No orders placed yet.</td></tr>';
+      return;
+    }
+
+    orders.forEach(function(ord) {
+      var tr = document.createElement("tr");
+      var badgeClass = ord.status === "Completed" ? "badge-completed" : "badge-pending";
+      
+      tr.innerHTML = 
+        '<td class="mono">' + ord.id + '</td>' +
+        '<td><b>' + ord.product_title + '</b></td>' +
+        '<td class="mono">' + ord.length + ' × ' + ord.width + ' × ' + ord.height + '</td>' +
+        '<td>' + ord.quantity + '</td>' +
+        '<td class="mono">' + ord.board_type + '</td>' +
+        '<td><span class="badge ' + badgeClass + '">' + ord.status + '</span></td>' +
+        '<td>' +
+          (ord.status !== "Completed" ? '<button class="action-btn action-btn-complete" onclick="markOrderCompleted(' + ord.id + ')">Complete</button>' : '') +
+          '<button class="action-btn action-btn-delete" onclick="deleteOrder(' + ord.id + ')">Delete</button>' +
+        '</td>';
+        
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Update order status to Completed
+  async function markOrderCompleted(orderId) {
+    if (confirm("Are you sure you want to mark order #" + orderId + " as Completed?")) {
+      if (isLive) {
+        var response = await supabase
+          .from("orders")
+          .update({ status: "Completed" })
+          .eq("id", orderId);
+        
+        if (response.error) alert("Error: " + response.error.message);
+      } else {
+        var orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
+        orders = orders.map(function(o) {
+          if (o.id === orderId) o.status = "Completed";
+          return o;
+        });
+        localStorage.setItem("mock_orders", JSON.stringify(orders));
+      }
+      loadOrders();
+    }
+  }
+
+  // Delete an order log
+  async function deleteOrder(orderId) {
+    if (confirm("Are you sure you want to delete order #" + orderId + " permanently?")) {
+      if (isLive) {
+        var response = await supabase
+          .from("orders")
+          .delete()
+          .eq("id", orderId);
+        
+        if (response.error) alert("Error: " + response.error.message);
+      } else {
+        var orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
+        orders = orders.filter(function(o) { return o.id !== orderId; });
+        localStorage.setItem("mock_orders", JSON.stringify(orders));
+      }
+      loadOrders();
+    }
+  }
+
+  // Upload product catalog configuration
+  async function handleProductUpload() {
+    var feedback = document.getElementById("upload-feedback");
+    feedback.innerText = "Uploading box details...";
+    feedback.style.color = "var(--ink)";
+
+    var id = document.getElementById("prod-id").value.trim().toLowerCase();
+    var title = document.getElementById("prod-title").value;
+    var tag = document.getElementById("prod-tag").value;
+    var category = document.getElementById("prod-category").value;
+    var dims = document.getElementById("prod-dims").value;
+    var price = document.getElementById("prod-price").value;
+    var minOrder = parseInt(document.getElementById("prod-moq").value);
+    var thickness = document.getElementById("prod-thickness").value;
+    var desc = document.getElementById("prod-desc").value;
+    
+    // Parse specs array (split by newlines)
+    var specs = document.getElementById("prod-specs").value.split("\n").filter(function(s) { return s.trim() !== ""; });
+    
+    // Extract images list
+    var images = [
+      document.getElementById("prod-img-1").value,
+      document.getElementById("prod-img-2").value,
+      document.getElementById("prod-img-3").value
+    ];
+
+    var productPayload = {
+      id: id,
+      title: title,
+      tag: tag,
+      size_category: category,
+      dims: dims,
+      price: price,
+      min_order: minOrder,
+      default_thickness: thickness,
+      desc: desc,
+      specs: specs,
+      images: images
+    };
+
+    if (isLive) {
+      var response = await supabase
+        .from("products")
+        .upsert(productPayload);
+
+      if (response.error) {
+        feedback.innerText = "Error: " + response.error.message;
+        feedback.style.color = "var(--stamp)";
+      } else {
+        feedback.innerText = "Product uploaded successfully to live Supabase database!";
+        feedback.style.color = "var(--wa)";
+        document.getElementById("upload-form").reset();
+      }
+    } else {
+      // Mock Storage Upload
+      var localProducts = JSON.parse(localStorage.getItem("mock_products") || "{}");
+      localProducts[id] = productPayload;
+      localStorage.setItem("mock_products", JSON.stringify(localProducts));
+      
+      feedback.innerText = "Product saved successfully to LocalStorage! (Will reflect on other pages local-mock session)";
+      feedback.style.color = "var(--wa)";
+      document.getElementById("upload-form").reset();
+    }
+  }
+
+  // Load state on start
+  window.addEventListener("load", checkAuth);
+</script>
+
+</body>
+</html>

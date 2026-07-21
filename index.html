@@ -258,6 +258,8 @@
     .custom-banner{ flex-direction:column; align-items:flex-start; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 </head>
 <body>
 
@@ -581,16 +583,86 @@
 </a>
 
 <script>
-  // Make home page box cards clickable to open products.html with matching filter
-  document.querySelectorAll('.box-card').forEach(function(card){
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', function(e){
-      if (!e.target.closest('.mini-order')) {
-        var filterVal = card.getAttribute('data-filter-to') || 'all';
-        window.location.href = 'products.html#' + filterVal;
+  var supabase = null;
+  var isLive = false;
+
+  async function loadDynamicProducts() {
+    if (typeof window.supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined' && isSupabaseConfigured()) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      isLive = true;
+    }
+
+    var list = [];
+    if (isLive) {
+      try {
+        var { data, error } = await supabase.from('products').select('*');
+        if (!error && data && data.length > 0) {
+          list = data;
+        }
+      } catch(e) {
+        console.error("Supabase load error on home:", e);
       }
+    } else {
+      // Local Mock DB check
+      var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
+      list = Object.values(mockProds);
+    }
+
+    if (list.length > 0) {
+      var grid = document.querySelector('.products-grid');
+      if (grid) {
+        grid.innerHTML = "";
+        list.forEach(function(prod) {
+          var prodId = prod.id;
+          var title = prod.title;
+          var tag = prod.tag;
+          var sizeCategory = prod.size_category || prod.sizeCategory;
+          var dims = prod.dims;
+          var price = prod.price;
+          var minOrder = prod.min_order || prod.minOrder;
+          var firstImg = prod.images[0] || "https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg";
+
+          var card = document.createElement("div");
+          card.className = "box-card";
+          card.setAttribute("data-filter-to", sizeCategory);
+          
+          card.innerHTML = 
+            '<a href="product-detail.html#' + prodId + '" style="text-decoration:none; color:inherit; display:block;">' +
+              '<div class="thumb"><img src="' + firstImg + '" alt="' + title + '" loading="lazy"></div>' +
+            '</a>' +
+            '<div class="tag-strip"><span>' + tag + '</span><span>' + sizeCategory + '</span></div>' +
+            '<div class="card-body">' +
+              '<a href="product-detail.html#' + prodId + '" style="text-decoration:none; color:inherit; display:block;">' +
+                '<h3>' + title + '</h3>' +
+                '<div class="dims mono">' + dims + '</div>' +
+                '<p class="desc">' + prod.desc.substring(0, 85) + '...</p>' +
+              '</a>' +
+              '<div class="price-row">' +
+                '<div class="price">' + price + '<span>per box, min ' + minOrder + '</span></div>' +
+              '</div>' +
+              '<a class="mini-order" href="product-detail.html#' + prodId + '">' +
+                'View Details' +
+              '</a>' +
+            '</div>';
+
+          grid.appendChild(card);
+        });
+      }
+    }
+
+    // Set up card clicks to redirect to detail pages
+    document.querySelectorAll('.box-card').forEach(function(card){
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', function(e){
+        if (!e.target.closest('.mini-order') && !e.target.closest('a')) {
+          var link = card.querySelector('a');
+          if (link) window.location.href = link.getAttribute('href');
+        }
+      });
     });
-  });
+  }
+
+  window.addEventListener("load", loadDynamicProducts);
 </script>
 
 </body>

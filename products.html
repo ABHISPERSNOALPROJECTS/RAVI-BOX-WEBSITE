@@ -6,7 +6,8 @@
 <title>Full Catalog — BoxCraft</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <style>
   :root{
     --paper:#EDE3D0;
@@ -362,20 +363,102 @@
 </a>
 
 <script>
-  var buttons = document.querySelectorAll('.filter-btn');
-  var cards = document.querySelectorAll('.p-card');
-  buttons.forEach(function(btn){
-    btn.addEventListener('click', function(){
-      buttons.forEach(function(b){ b.classList.remove('active'); });
-      btn.classList.add('active');
-      var f = btn.getAttribute('data-filter');
-      cards.forEach(function(card){
-        card.style.display = (f === 'all' || card.getAttribute('data-size') === f) ? '' : 'none';
+  var supabase = null;
+  var isLive = false;
+
+  async function loadDynamicCatalog() {
+    if (typeof SUPABASE_URL !== 'undefined' && isSupabaseConfigured()) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      isLive = true;
+    }
+
+    var list = [];
+    if (isLive) {
+      try {
+        var { data, error } = await supabase.from('products').select('*');
+        if (!error && data && data.length > 0) {
+          list = data;
+        }
+      } catch(e) {
+        console.error("Supabase load error on catalog:", e);
+      }
+    } else {
+      var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
+      list = Object.values(mockProds);
+    }
+
+    if (list.length > 0) {
+      var grid = document.getElementById('grid');
+      if (grid) {
+        grid.innerHTML = "";
+        list.forEach(function(prod) {
+          var prodId = prod.id;
+          var title = prod.title;
+          var tag = prod.tag;
+          var sizeCategory = prod.size_category || prod.sizeCategory;
+          var dims = prod.dims;
+          var price = prod.price;
+          var minOrder = prod.min_order || prod.minOrder;
+          var firstImg = prod.images[0] || "https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg";
+
+          var specsHtml = "";
+          if (prod.specs && prod.specs.length > 0) {
+            prod.specs.forEach(function(s) {
+              specsHtml += '<li>' + s + '</li>';
+            });
+          }
+
+          var card = document.createElement("div");
+          card.className = "p-card";
+          card.setAttribute("data-size", sizeCategory);
+          
+          card.innerHTML = 
+            '<a href="product-detail.html#' + prodId + '" style="text-decoration:none; color:inherit; display:block;">' +
+              '<div class="thumb">' +
+                '<span class="size-pill">' + sizeCategory.charAt(0).toUpperCase() + sizeCategory.slice(1) + '</span>' +
+                '<img src="' + firstImg + '" alt="' + title + '" loading="lazy">' +
+              '</div>' +
+            '</a>' +
+            '<div class="body">' +
+              '<a href="product-detail.html#' + prodId + '" style="text-decoration:none; color:inherit; display:block;">' +
+                '<h3>' + title + '</h3>' +
+                '<div class="dims mono">' + dims + '</div>' +
+                '<p class="desc">' + prod.desc.substring(0, 85) + '...</p>' +
+              '</a>' +
+              '<ul class="specs">' + specsHtml + '</ul>' +
+              '<div class="price-row">' +
+                '<div class="price">' + price + '<span>per box, min ' + minOrder + '</span></div>' +
+              '</div>' +
+              '<a class="mini-order" href="product-detail.html#' + prodId + '">' +
+                'View Details' +
+              '</a>' +
+            '</div>';
+
+          grid.appendChild(card);
+        });
+      }
+    }
+
+    setupFilters();
+  }
+
+  function setupFilters() {
+    var buttons = document.querySelectorAll('.filter-btn');
+    var cards = document.querySelectorAll('.p-card');
+    buttons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        buttons.forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        var f = btn.getAttribute('data-filter');
+        cards.forEach(function(card){
+          card.style.display = (f === 'all' || card.getAttribute('data-size') === f) ? '' : 'none';
+        });
       });
     });
-  });
 
-  // Apply filter from URL hash on load or hash change
+    applyHashFilter();
+  }
+
   function applyHashFilter() {
     var hash = window.location.hash.substring(1);
     if (hash && (hash === 'small' || hash === 'medium' || hash === 'large')) {
@@ -386,8 +469,8 @@
     }
   }
 
-  window.addEventListener('load', applyHashFilter);
   window.addEventListener('hashchange', applyHashFilter);
+  window.addEventListener('load', loadDynamicCatalog);
 </script>
 
 </body>
