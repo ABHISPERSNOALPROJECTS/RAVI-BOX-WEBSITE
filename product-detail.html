@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Details — BoxCraft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDE3D0;
+    --paper-light:#F6F0E2;
+    --board:#B98A54;
+    --board-dark:#7A5230;
+    --ink:#211B14;
+    --stamp:#BF3B23;
+    --tape:#D9C08B;
+    --line:rgba(33,27,20,0.25);
+    --wa:#3FA047;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px;}
+  h1,h2,h3{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; letter-spacing:0.5px; line-height:1.02;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+  img{max-width:100%; display:block;}
+
+  /* ---------- fold-line divider ---------- */
+  .foldline{
+    width:100%; height:0; border-top:2px dashed var(--board-dark); opacity:0.5;
+    position:relative; margin: 40px 0;
+  }
+  .foldline::before,.foldline::after{
+    content:"✂"; position:absolute; top:-11px; font-size:14px; color:var(--board-dark); opacity:0.6;
+  }
+  .foldline::before{left:24px;}
+  .foldline::after{right:24px;}
+
+  /* ---------- nav ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:var(--paper-light);
+    border-bottom:2px dashed var(--board-dark);
+  }
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px; max-width:1180px; margin:0 auto;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Anton', sans-serif; font-size:22px; letter-spacing:0.5px;
+    text-decoration:none; color:var(--ink);
+  }
+  .logo .crate{
+    width:34px; height:34px; border:2.5px solid var(--ink); border-radius:3px;
+    position:relative; flex-shrink:0;
+  }
+  .logo .crate::before, .logo .crate::after{
+    content:""; position:absolute; background:var(--ink);
+  }
+  .logo .crate::before{ top:0; bottom:0; left:50%; width:2px; transform:translateX(-50%); }
+  .logo .crate::after{ left:0; right:0; top:50%; height:2px; transform:translateY(-50%); }
+  .nav-links{display:flex; align-items:center; gap:28px; font-size:14px; font-weight:600;}
+  .nav-links a{text-decoration:none; opacity:0.8; transition:opacity .15s;}
+  .nav-links a:hover{opacity:1;}
+  .nav-cta{
+    display:flex; align-items:center; gap:8px;
+    background:var(--wa); color:#fff; padding:9px 16px; border-radius:4px;
+    font-size:13px; font-weight:600; text-decoration:none;
+    border-bottom:3px solid #2c7a32;
+  }
+
+  /* ---------- details page layout ---------- */
+  .details-container{
+    padding:40px 0 20px;
+  }
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600;
+    text-decoration:none; margin-bottom:28px; opacity:0.8;
+  }
+  .back-link:hover{ opacity:1; text-decoration:underline; }
+
+  .detail-grid{
+    display:grid; grid-template-columns:1.1fr 0.9fr; gap:48px;
+  }
+
+  /* gallery */
+  .gallery-container{
+    display:flex; flex-direction:column;
+  }
+  .gallery-active{
+    width:100%; aspect-ratio:4/3; border:2.5px solid var(--ink); border-radius:6px;
+    overflow:hidden; background:var(--board);
+  }
+  .gallery-active img{
+    width:100%; height:100%; object-fit:cover;
+  }
+  .gallery-thumbs{
+    display:flex; gap:12px; margin-top:16px;
+  }
+  .gallery-thumb{
+    width:80px; height:60px; border:2px solid var(--ink); border-radius:4px;
+    cursor:pointer; overflow:hidden; opacity:0.6; transition:opacity .15s, border-color .15s;
+    background:var(--board);
+  }
+  .gallery-thumb:hover{ opacity:1; }
+  .gallery-thumb.active{ opacity:1; border-color:var(--stamp); border-width:2.5px; }
+  .gallery-thumb img{ width:100%; height:100%; object-fit:cover; }
+
+  /* product info */
+  .eyebrow-stamp{
+    display:inline-flex; align-items:center; gap:8px;
+    border:2px solid var(--stamp); color:var(--stamp);
+    font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600;
+    letter-spacing:1.5px; text-transform:uppercase;
+    padding:6px 12px; border-radius:3px; transform:rotate(-1.5deg);
+    margin-bottom:22px; width:fit-content;
+  }
+  .product-info h1{
+    font-size:clamp(32px, 4.5vw, 48px); margin-bottom:14px;
+  }
+  .product-info .dims{
+    font-family:'IBM Plex Mono', monospace; font-size:15px; color:var(--board-dark); font-weight:600;
+    margin-bottom:18px; padding-bottom:12px; border-bottom:1.5px dashed var(--line);
+  }
+  .product-info p.desc{
+    font-size:15px; line-height:1.6; color:#3a3226; margin-bottom:24px;
+  }
+  .product-info h4{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; text-transform:uppercase;
+    letter-spacing:1px; color:var(--board-dark); margin-bottom:12px;
+  }
+  .specs-list{
+    list-style:none; font-size:14px; margin-bottom:30px;
+  }
+  .specs-list li{
+    padding:4px 0; display:flex; gap:8px; align-items:flex-start;
+  }
+  .specs-list li::before{
+    content:"—"; color:var(--stamp); font-weight:bold; flex-shrink:0;
+  }
+
+  /* price summary bar */
+  .price-bar{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--paper-light); border:2px solid var(--ink); border-radius:6px;
+    padding:16px 20px; margin-bottom:28px;
+  }
+  .price-bar .price-label{ font-size:13px; color:#5a503f; }
+  .price-bar .price-val{ font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:700; color:var(--ink); }
+  .price-bar .price-val span{ font-size:11px; display:block; font-weight:400; color:#5a503f; text-align:right;}
+
+  /* custom order form */
+  .order-builder{
+    background:var(--paper-light); border:2px dashed var(--board-dark); border-radius:8px;
+    padding:24px 28px; margin-top:20px;
+  }
+  .order-builder h3{ font-size:20px; margin-bottom:8px; }
+  .order-builder p.sub{ font-size:13px; color:#5a503f; margin-bottom:18px; line-height:1.4; }
+  
+  .form-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;
+  }
+  .form-row-full{
+    grid-column:span 2;
+  }
+  .form-group{
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .form-group label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; text-transform:uppercase; color:#5a503f;
+  }
+  .form-input{
+    border:2.5px solid var(--ink); border-radius:4px; padding:10px 12px;
+    font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:600;
+    background:#fff; color:var(--ink); outline:none; width:100%;
+  }
+  .form-input:focus{ border-color:var(--board-dark); }
+  
+  /* dimensions row */
+  .dims-input-row{
+    display:flex; gap:8px; align-items:center;
+  }
+  .dims-input-row input{
+    text-align:center; padding:10px 6px;
+  }
+  .dims-input-row span{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--board-dark); font-weight:700;
+  }
+
+  .ctas{
+    display:flex; flex-direction:column; gap:12px; margin-top:16px;
+  }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    text-decoration:none; font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:14px;
+    letter-spacing:0.5px; padding:15px; border-radius:4px; text-transform:uppercase;
+    border:2px solid var(--ink); cursor:pointer; width:100%; transition:transform .15s, box-shadow .15s;
+  }
+  .btn-primary{
+    background:var(--stamp); color:#fff;
+    box-shadow:3px 3px 0 var(--ink);
+  }
+  .btn-primary:hover{
+    transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink);
+  }
+  .btn-secondary{
+    background:var(--wa); color:#fff;
+    box-shadow:3px 3px 0 var(--ink);
+  }
+  .btn-secondary:hover{
+    transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink);
+  }
+  .btn svg{ width:18px; height:18px; fill:currentColor; }
+
+  /* ---------- suggested catalog ---------- */
+  .suggested-section{
+    padding:40px 0;
+  }
+  .suggested-section h2{
+    font-size:28px; margin-bottom:28px;
+  }
+  .products-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:22px;
+  }
+  .box-card{
+    background:var(--paper-light); border:2px solid var(--ink); border-radius:6px;
+    padding:0; overflow:hidden; position:relative; transition:transform .15s;
+  }
+  .box-card:hover{ transform:translateY(-4px); }
+  .box-card .thumb{ width:100%; aspect-ratio:4/3; overflow:hidden; border-bottom:2px solid var(--ink); background:var(--board); }
+  .box-card .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .box-card .tag-strip{
+    background:var(--board); color:var(--paper-light);
+    font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600;
+    letter-spacing:1px; text-transform:uppercase;
+    padding:7px 14px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .box-card .card-body{ padding:20px; }
+  .box-card h3{ font-family:'Anton',sans-serif; font-size:22px; margin-bottom:6px; }
+  .box-card .dims{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--board-dark); font-weight:600;
+    margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--line);
+  }
+  .box-card p.desc{ font-size:13.5px; color:#4a4030; line-height:1.55; margin-bottom:16px; min-height:56px;}
+  .box-card .price-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .box-card .price{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:15px; }
+  .box-card .price span{ font-size:11px; color:#7a6f5c; display:block; font-weight:400; }
+  .mini-order{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; background:var(--ink); color:var(--paper-light); text-decoration:none;
+    padding:11px; border-radius:4px; font-size:13px; font-weight:600;
+    font-family:'IBM Plex Mono', monospace; letter-spacing:0.5px;
+    transition:background .15s;
+  }
+  .mini-order:hover{ background:var(--stamp); }
+  .mini-order svg{width:15px; height:15px;}
+
+  /* ---------- footer ---------- */
+  footer{ background:var(--ink); color:var(--paper-light); padding:50px 0 26px; }
+  .foot-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:36px; margin-bottom:36px; }
+  footer .logo{ color:var(--paper-light); margin-bottom:14px; }
+  footer .logo .crate{ border-color:var(--paper-light); }
+  footer .logo .crate::before, footer .logo .crate::after{ background:var(--paper-light); }
+  footer p.tag{ font-size:13.5px; color:#c9bfa9; max-width:280px; line-height:1.6; }
+  footer h4{ font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#c9bfa9; margin-bottom:14px; }
+  footer ul{ list-style:none; }
+  footer li{ margin-bottom:10px; font-size:13.5px; }
+  footer a{ text-decoration:none; color:#e6ddc8; }
+  footer a:hover{ color:var(--stamp); }
+  .foot-bottom{ border-top:1px solid rgba(255,255,255,0.15); padding-top:20px; font-size:12px; color:#9a8f78; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:900px){
+    .detail-grid{ grid-template-columns:1fr; gap:32px; }
+    .products-grid{ grid-template-columns:1fr 1fr; }
+    .foot-grid{ grid-template-columns:1fr; gap:26px; }
+    .nav-links{ display:none; }
+  }
+  @media (max-width:560px){
+    .products-grid{ grid-template-columns:1fr; }
+    .form-grid{ grid-template-columns:1fr; }
+    .form-row-full{ grid-column:span 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="logo" href="home.html"><span class="crate"></span>BOXCRAFT</a>
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="products.html">Full catalog</a>
+      <a href="home.html#how">How to order</a>
+      <a href="home.html#custom">Custom size</a>
+    </div>
+    <a class="nav-cta" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20boxes" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+      WhatsApp
+    </a>
+  </nav>
+</header>
+
+<main class="wrap details-container">
+  <a href="products.html" class="back-link">← Back to Full Catalog</a>
+
+  <div class="detail-grid">
+    <!-- Left Column: Gallery -->
+    <div class="gallery-container">
+      <div class="gallery-active" id="active-view">
+        <!-- Main Image -->
+        <img id="main-image" src="" alt="Box Image">
+      </div>
+      <div class="gallery-thumbs" id="thumbs-row">
+        <!-- Thumbnails populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Right Column: Info & Customizer -->
+    <div class="product-info">
+      <span class="eyebrow-stamp" id="product-tag">Mailer box</span>
+      <h1 id="product-title">Mailer Box</h1>
+      <div class="dims mono" id="product-dims">150 × 100 × 50 mm</div>
+      
+      <p class="desc" id="product-desc">Loading details...</p>
+
+      <div class="price-bar">
+        <div>
+          <div class="price-label">Price starting from</div>
+          <div class="price-val" id="product-price">₹9</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price-label">Minimum Order Quantity</div>
+          <div class="price-val" style="font-size:20px; font-weight:600;"><span id="product-moq">100</span> units</div>
+        </div>
+      </div>
+
+      <h4>Standard Specifications:</h4>
+      <ul class="specs-list" id="specs-list">
+        <!-- Specs populated dynamically -->
+      </ul>
+
+      <!-- Customizer / Buy Now Drawer -->
+      <div class="order-builder">
+        <h3>Configure &amp; Pre-order</h3>
+        <p class="sub">Change the presets below if you need a custom size. We'll generate a WhatsApp preorder note for your quote.</p>
+        
+        <form id="order-form" onsubmit="event.preventDefault(); handleOrderSubmit();">
+          <div class="form-grid">
+            <div class="form-group form-row-full">
+              <label>Dimensions (Length × Width × Height) in mm</label>
+              <div class="dims-input-row">
+                <input class="form-input" type="number" id="box-l" value="" min="10" required>
+                <span>×</span>
+                <input class="form-input" type="number" id="box-w" value="" min="10" required>
+                <span>×</span>
+                <input class="form-input" type="number" id="box-h" value="" min="10" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="box-qty">Quantity (Units)</label>
+              <input class="form-input" type="number" id="box-qty" value="" min="1" required>
+            </div>
+
+            <div class="form-group">
+              <label for="box-thickness">Board Type</label>
+              <select class="form-input" id="box-thickness">
+                <option value="3-Ply Standard">3-Ply Standard</option>
+                <option value="5-Ply Heavy">5-Ply Heavy</option>
+                <option value="7-Ply Heavy Duty">7-Ply Heavy Duty</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="ctas">
+            <button type="submit" class="btn btn-primary">
+              Buy Now / Custom Quote
+            </button>
+            
+            <a href="" id="btn-standard-wa" class="btn btn-secondary" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+              Order Standard size directly
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="foldline"></div>
+
+  <!-- Alternative suggestions section (niche dusre catalog suggest ho) -->
+  <section class="suggested-section">
+    <h2>Alternative Products You Might Need</h2>
+    <div class="products-grid" id="suggested-grid">
+      <!-- Generated dynamically -->
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="logo" style="color:var(--paper-light);"><span class="crate"></span>BOXCRAFT</div>
+        <p class="tag">Custom and standard packaging boxes, made to order and shipped across Gujarat.</p>
+      </div>
+      <div>
+        <h4>Boxes</h4>
+        <ul>
+          <li><a href="products.html">Full catalog</a></li>
+          <li><a href="product-detail.html#mailer">Mailer</a></li>
+          <li><a href="product-detail.html#gift">Gift &amp; jewelry</a></li>
+          <li><a href="product-detail.html#shipping">Shipping carton</a></li>
+          <li><a href="product-detail.html#heavyduty">Heavy-duty</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="https://wa.me/919999999999" target="_blank" rel="noopener">WhatsApp: +91 99999 99999</a></li>
+          <li><a href="tel:+919999999999">Call: +91 99999 99999</a></li>
+          <li>Rajkot, Gujarat</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 BoxCraft. All rights reserved.</span>
+      <span>Demo built for review — content, photos and prices are placeholders.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Products Database
+  var productsData = {
+    mailer: {
+      id: "mailer",
+      title: "Mailer Box",
+      sizeCategory: "small",
+      tag: "Mailer box",
+      dims: "150 × 100 × 50 mm",
+      rawDims: { l: 150, w: 100, h: 50 },
+      price: "₹9",
+      minOrder: 100,
+      defaultThickness: "3-Ply Standard",
+      desc: "Perfect for jewelry, cosmetics, and small D2C shipments. Made from lightweight yet durable 3-ply kraft corrugated board. Custom printing options are available for wholesale orders. Designed to assemble quickly and ship safely without tape.",
+      specs: [
+        "3-ply corrugated board, 300 GSM kraft paper",
+        "Matte rustic kraft or plain clean brown finish",
+        "Self-locking tuck flap, completely tape-free assembly",
+        "100% biodegradable and recycled material"
+      ],
+      images: [
+        "https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/8015783/pexels-photo-8015783.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/8015781/pexels-photo-8015781.jpeg?auto=compress&cs=tinysrgb&w=800"
+      ]
+    },
+    gift: {
+      id: "gift",
+      title: "Gift & Jewelry Box",
+      sizeCategory: "small",
+      tag: "Gift box",
+      dims: "120 × 120 × 60 mm",
+      rawDims: { l: 120, w: 120, h: 60 },
+      price: "₹22",
+      minOrder: 50,
+      defaultThickness: "3-Ply Standard",
+      desc: "Premium rigid setup gift box. Widely used for luxury wedding favors, festive gift hampers, jewelry packaging, and premium product giveaways. Features a stiff, heavy-duty cardboard core for ultimate crush-resistance.",
+      specs: [
+        "Rigid cardboard chipboard core, 1200 GSM thickness",
+        "Magnetic flap closure options",
+        "Custom lamination and debossing available on wholesale",
+        "Velvet-lined foam and die-cut dividers on request"
+      ],
+      images: [
+        "https://images.pexels.com/photos/6119143/pexels-photo-6119143.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/264771/pexels-photo-264771.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/264917/pexels-photo-264917.jpeg?auto=compress&cs=tinysrgb&w=800"
+      ]
+    },
+    shipping: {
+      id: "shipping",
+      title: "Shipping Carton",
+      sizeCategory: "medium",
+      tag: "Shipping carton",
+      dims: "300 × 220 × 180 mm",
+      rawDims: { l: 300, w: 220, h: 180 },
+      price: "₹28",
+      minOrder: 50,
+      defaultThickness: "5-Ply Heavy",
+      desc: "Our bestselling medium-sized shipper boxes. Specifically designed to withstand typical courier handling, transit vibrations, and drop impacts. Ideal for shipping apparel stacks, footwear, electronics, and books.",
+      specs: [
+        "5-ply double-wall corrugated structure",
+        "Heavy test kraft liners with vertical wave-fluting",
+        "Accepts heavy-weight taping securely",
+        "Fits securely inside standard plastic courier bags"
+      ],
+      images: [
+        "https://images.pexels.com/photos/7464209/pexels-photo-7464209.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/7464972/pexels-photo-7464972.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/4498136/pexels-photo-4498136.jpeg?auto=compress&cs=tinysrgb&w=800"
+      ]
+    },
+    apparel: {
+      id: "apparel",
+      title: "Apparel Folding Box",
+      sizeCategory: "medium",
+      tag: "Apparel box",
+      dims: "330 × 250 × 80 mm",
+      rawDims: { l: 330, w: 250, h: 80 },
+      price: "₹18",
+      minOrder: 100,
+      defaultThickness: "3-Ply Standard",
+      desc: "Pop-up folding apparel box designed specifically for clothing items like sarees, shirts, linens, and garments. Ships folded completely flat to save on warehousing footprint and snaps open in a few seconds.",
+      specs: [
+        "3-ply lightweight folding design, space-saving",
+        "Bleached white liner or plain classic kraft option",
+        "Convenient tuck-in lid closure, no tape needed",
+        "Provides a clean canvas for screen printing designs"
+      ],
+      images: [
+        "https://images.pexels.com/photos/7410461/pexels-photo-7410461.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/7410459/pexels-photo-7410459.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/7410458/pexels-photo-7410458.jpeg?auto=compress&cs=tinysrgb&w=800"
+      ]
+    },
+    heavyduty: {
+      id: "heavyduty",
+      title: "Heavy-Duty Box",
+      sizeCategory: "large",
+      tag: "Heavy duty",
+      dims: "450 × 350 × 300 mm",
+      rawDims: { l: 450, w: 350, h: 300 },
+      price: "₹54",
+      minOrder: 25,
+      defaultThickness: "7-Ply Heavy Duty",
+      desc: "Sturdy 7-ply heavy industrial packaging box. Engineered for shipping machine components, tools, metallic hardware parts, bulk supplies, and household electronics safely without structural bowing.",
+      specs: [
+        "7-ply triple fluting double-wall heavy board",
+        "Stitch-welded or reinforced corner seams",
+        "Safely handles load weights up to 25 kg",
+        "Moisture-resistant kraft outer lining"
+      ],
+      images: [
+        "https://images.pexels.com/photos/10834810/pexels-photo-10834810.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/906494/pexels-photo-906494.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/10834813/pexels-photo-10834813.jpeg?auto=compress&cs=tinysrgb&w=800"
+      ]
+    },
+    bulk: {
+      id: "bulk",
+      title: "Bulk & Pallet Box",
+      sizeCategory: "large",
+      tag: "Bulk pallet",
+      dims: "600 × 400 × 400 mm",
+      rawDims: { l: 600, w: 400, h: 400 },
+      price: "₹89",
+      minOrder: 20,
+      defaultThickness: "7-Ply Heavy Duty",
+      desc: "Extra large bulk shipping box designed to align perfectly with standard truck loads and wooden pallets. Highly suitable for commercial supply chains, cargo moves, exports, and heavy agricultural shipments.",
+      specs: [
+        "Pallet-stackable volume proportions",
+        "Super thick double-wall board structure",
+        "Double layer stitched base options",
+        "Specifically reinforced bottom corners to prevent stack slips"
+      ],
+      images: [
+        "https://images.pexels.com/photos/29653988/pexels-photo-29653988.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/29653989/pexels-photo-29653989.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/172074/pexels-photo-172074.jpeg?auto=compress&cs=tinysrgb&w=800"
+      ]
+    }
+  };
+
+  var currentProduct = null;
+
+  // Load and render page based on URL hash
+  function renderDetails() {
+    var hash = window.location.hash.substring(1);
+    
+    // Default to mailer if invalid hash
+    if (!hash || !productsData[hash]) {
+      hash = "mailer";
+    }
+
+    currentProduct = productsData[hash];
+    document.title = currentProduct.title + " — BoxCraft";
+
+    // Set textual details
+    document.getElementById("product-tag").innerText = currentProduct.tag;
+    document.getElementById("product-title").innerText = currentProduct.title;
+    document.getElementById("product-dims").innerText = currentProduct.dims;
+    document.getElementById("product-desc").innerText = currentProduct.desc;
+    document.getElementById("product-price").innerText = currentProduct.price;
+    document.getElementById("product-moq").innerText = currentProduct.minOrder;
+
+    // Set standard parameters in order form
+    document.getElementById("box-l").value = currentProduct.rawDims.l;
+    document.getElementById("box-w").value = currentProduct.rawDims.w;
+    document.getElementById("box-h").value = currentProduct.rawDims.h;
+    document.getElementById("box-qty").value = currentProduct.minOrder;
+    document.getElementById("box-qty").min = currentProduct.minOrder; // enforce MOQ
+    document.getElementById("box-thickness").value = currentProduct.defaultThickness;
+
+    // Populate specs list
+    var specsUl = document.getElementById("specs-list");
+    specsUl.innerHTML = "";
+    currentProduct.specs.forEach(function(spec) {
+      var li = document.createElement("li");
+      li.innerText = spec;
+      specsUl.appendChild(li);
+    });
+
+    // Populate gallery images
+    var mainImg = document.getElementById("main-image");
+    mainImg.src = currentProduct.images[0];
+    mainImg.alt = currentProduct.title;
+
+    var thumbsRow = document.getElementById("thumbs-row");
+    thumbsRow.innerHTML = "";
+    currentProduct.images.forEach(function(imgUrl, idx) {
+      var thumbDiv = document.createElement("div");
+      thumbDiv.className = "gallery-thumb" + (idx === 0 ? " active" : "");
+      
+      var img = document.createElement("img");
+      img.src = imgUrl;
+      img.alt = currentProduct.title + " thumbnail " + (idx + 1);
+      
+      thumbDiv.appendChild(img);
+      
+      thumbDiv.addEventListener("click", function() {
+        // Remove active class from all
+        document.querySelectorAll(".gallery-thumb").forEach(function(el) {
+          el.classList.remove("active");
+        });
+        // Set active
+        thumbDiv.classList.add("active");
+        mainImg.src = imgUrl;
+      });
+
+      thumbsRow.appendChild(thumbDiv);
+    });
+
+    // Populate standard direct WhatsApp link
+    var stdWaMsg = encodeURIComponent("Hi BoxCraft! I want to order standard " + currentProduct.title + " (Dimensions: " + currentProduct.dims + ", Quantity: " + currentProduct.minOrder + ", Board Type: " + currentProduct.defaultThickness + ")");
+    document.getElementById("btn-standard-wa").href = "https://wa.me/919999999999?text=" + stdWaMsg;
+
+    // Generate related products
+    generateRelated();
+    
+    // Scroll to top on load
+    window.scrollTo(0, 0);
+  }
+
+  // Handle preorder custom form submission and redirect to WhatsApp
+  function handleOrderSubmit() {
+    if (!currentProduct) return;
+
+    var l = document.getElementById("box-l").value;
+    var w = document.getElementById("box-w").value;
+    var h = document.getElementById("box-h").value;
+    var qty = document.getElementById("box-qty").value;
+    var thickness = document.getElementById("box-thickness").value;
+
+    var waMsg = "Hi BoxCraft! I want to order " + currentProduct.title + " with these details:\n\n" +
+                "• Length: " + l + " mm\n" +
+                "• Width: " + w + " mm\n" +
+                "• Height: " + h + " mm\n" +
+                "• Quantity: " + qty + " units\n" +
+                "• Board Type: " + thickness + "\n\n" +
+                "Please send me a price quote.";
+
+    var waUrl = "https://wa.me/919999999999?text=" + encodeURIComponent(waMsg);
+    window.open(waUrl, "_blank");
+  }
+
+  // Generate 3 alternative suggestions (excluding current one)
+  function generateRelated() {
+    var grid = document.getElementById("suggested-grid");
+    grid.innerHTML = "";
+    
+    var count = 0;
+    for (var key in productsData) {
+      if (key !== currentProduct.id && count < 3) {
+        var prod = productsData[key];
+        
+        var card = document.createElement("div");
+        card.className = "box-card";
+        
+        card.innerHTML = 
+          '<a href="product-detail.html#' + prod.id + '" style="text-decoration:none; color:inherit; display:block;">' +
+            '<div class="thumb"><img src="' + prod.images[0] + '" alt="' + prod.title + '" loading="lazy"></div>' +
+          '</a>' +
+          '<div class="tag-strip"><span>' + prod.tag + '</span><span>' + prod.sizeCategory + '</span></div>' +
+          '<div class="card-body">' +
+            '<a href="product-detail.html#' + prod.id + '" style="text-decoration:none; color:inherit; display:block;">' +
+              '<h3>' + prod.title + '</h3>' +
+              '<div class="dims">' + prod.dims + '</div>' +
+              '<p class="desc" style="min-height:auto; margin-bottom:12px;">Alternative size option available.</p>' +
+            '</a>' +
+            '<div class="price-row">' +
+              '<div class="price">' + prod.price + '<span>per box, min ' + prod.minOrder + '</span></div>' +
+            '</div>' +
+            '<a class="mini-order" href="product-detail.html#' + prod.id + '">' +
+              'View Details' +
+            '</a>' +
+          '</div>';
+
+        grid.appendChild(card);
+        count++;
+      }
+    }
+  }
+
+  // Initialize page load and change events
+  window.addEventListener("load", renderDetails);
+  window.addEventListener("hashchange", renderDetails);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BoxCraft — Custom Boxes, Any Size</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDE3D0;
+    --paper-light:#F6F0E2;
+    --board:#B98A54;
+    --board-dark:#7A5230;
+    --ink:#211B14;
+    --stamp:#BF3B23;
+    --tape:#D9C08B;
+    --line:rgba(33,27,20,0.25);
+    --wa:#3FA047;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px;}
+  h1,h2,h3{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; letter-spacing:0.5px; line-height:1.02;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+  img{max-width:100%; display:block;}
+
+  /* ---------- fold-line divider ---------- */
+  .foldline{
+    width:100%; height:0; border-top:2px dashed var(--board-dark); opacity:0.5;
+    position:relative;
+  }
+  .foldline::before,.foldline::after{
+    content:"✂"; position:absolute; top:-11px; font-size:14px; color:var(--board-dark); opacity:0.6;
+  }
+  .foldline::before{left:24px;}
+  .foldline::after{right:24px;}
+
+  /* ---------- nav ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:var(--paper-light);
+    border-bottom:2px dashed var(--board-dark);
+  }
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px; max-width:1180px; margin:0 auto;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Anton', sans-serif; font-size:22px; letter-spacing:0.5px;
+  }
+  .logo .crate{
+    width:34px; height:34px; border:2.5px solid var(--ink); border-radius:3px;
+    position:relative; flex-shrink:0;
+  }
+  .logo .crate::before, .logo .crate::after{
+    content:""; position:absolute; background:var(--ink);
+  }
+  .logo .crate::before{ top:0; bottom:0; left:50%; width:2px; transform:translateX(-50%); }
+  .logo .crate::after{ left:0; right:0; top:50%; height:2px; transform:translateY(-50%); }
+  .nav-links{display:flex; align-items:center; gap:28px; font-size:14px; font-weight:600;}
+  .nav-links a{text-decoration:none; opacity:0.8; transition:opacity .15s;}
+  .nav-links a:hover{opacity:1;}
+  .nav-cta{
+    display:flex; align-items:center; gap:8px;
+    background:var(--wa); color:#fff; padding:9px 16px; border-radius:4px;
+    font-size:13px; font-weight:600; text-decoration:none;
+    border-bottom:3px solid #2c7a32;
+  }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:64px 0 48px;
+    display:grid; grid-template-columns:1.05fr 0.95fr; gap:40px; align-items:center;
+  }
+  .eyebrow-stamp{
+    display:inline-flex; align-items:center; gap:8px;
+    border:2px solid var(--stamp); color:var(--stamp);
+    font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600;
+    letter-spacing:1.5px; text-transform:uppercase;
+    padding:6px 12px; border-radius:3px; transform:rotate(-2deg);
+    margin-bottom:22px;
+  }
+  .hero h1{
+    font-size:clamp(42px, 5.4vw, 68px);
+    margin-bottom:20px;
+  }
+  .hero h1 .accent{ color:var(--stamp); }
+  .hero p.lead{
+    font-size:17px; line-height:1.6; color:#3a3226; max-width:460px; margin-bottom:30px;
+  }
+  .hero-ctas{display:flex; align-items:center; gap:20px; flex-wrap:wrap;}
+  .stamp-btn{
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--stamp); color:#fff; text-decoration:none;
+    font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:14px;
+    letter-spacing:1px; text-transform:uppercase;
+    padding:16px 26px; border-radius:4px;
+    transform:rotate(-1.5deg);
+    border:2px solid var(--ink);
+    box-shadow:3px 3px 0 var(--ink);
+    transition:transform .15s, box-shadow .15s;
+  }
+  .stamp-btn:hover{ transform:rotate(0deg) translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink); }
+  .stamp-btn svg{width:18px; height:18px; flex-shrink:0;}
+  .ghost-link{
+    font-size:14px; font-weight:600; text-decoration:none; border-bottom:2px solid var(--ink); padding-bottom:2px;
+  }
+
+  .dieline-wrap{ position:relative; }
+  .dieline-wrap svg{ width:100%; height:auto; }
+  .dim-label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; fill:var(--board-dark); font-weight:600;
+  }
+
+  /* ---------- how it works ---------- */
+  .section{padding:60px 0;}
+  .section-head{ margin-bottom:38px; max-width:560px; }
+  .section-head .tag{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--board-dark); font-weight:600; margin-bottom:10px; display:block;
+  }
+  .section-head h2{ font-size:clamp(28px,3.6vw,40px); }
+
+  .steps{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:2px solid var(--ink); border-radius:6px; overflow:hidden; }
+  .step{ padding:26px 22px; border-right:2px dashed var(--board-dark); background:var(--paper-light); position:relative; }
+  .step:last-child{ border-right:none; }
+  .step .num{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--stamp); font-weight:700; margin-bottom:14px; display:block;}
+  .step h3{ font-family:'Work Sans',sans-serif; font-weight:700; text-transform:none; font-size:16px; margin-bottom:8px; letter-spacing:0; }
+  .step p{ font-size:13.5px; color:#4a4030; line-height:1.55; }
+
+  /* ---------- products ---------- */
+  .products-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:22px;
+  }
+  .box-card{
+    background:var(--paper-light); border:2px solid var(--ink); border-radius:6px;
+    padding:0; overflow:hidden; position:relative;
+    transition:transform .15s;
+  }
+  .box-card:hover{ transform:translateY(-4px); }
+  .box-card .thumb{ width:100%; aspect-ratio:4/3; overflow:hidden; border-bottom:2px solid var(--ink); background:var(--board); }
+  .box-card .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .box-card .tag-strip{
+    background:var(--board); color:var(--paper-light);
+    font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600;
+    letter-spacing:1px; text-transform:uppercase;
+    padding:7px 14px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .box-card .card-body{ padding:20px; }
+  .box-card h3{ font-family:'Anton',sans-serif; font-size:22px; margin-bottom:6px; }
+  .box-card .dims{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--board-dark); font-weight:600;
+    margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--line);
+  }
+  .box-card p.desc{ font-size:13.5px; color:#4a4030; line-height:1.55; margin-bottom:16px; min-height:56px;}
+  .box-card .price-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .box-card .price{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:15px; }
+  .box-card .price span{ font-size:11px; color:#7a6f5c; display:block; font-weight:400; }
+  .mini-order{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; background:var(--ink); color:var(--paper-light); text-decoration:none;
+    padding:11px; border-radius:4px; font-size:13px; font-weight:600;
+    font-family:'IBM Plex Mono', monospace; letter-spacing:0.5px;
+    transition:background .15s;
+  }
+  .mini-order:hover{ background:var(--stamp); }
+  .mini-order svg{width:15px; height:15px;}
+
+  /* custom size banner */
+  .custom-banner{
+    margin-top:44px;
+    border:2px dashed var(--board-dark); border-radius:8px;
+    padding:38px 40px; display:flex; align-items:center; justify-content:space-between; gap:24px;
+    background:var(--paper-light); flex-wrap:wrap;
+  }
+  .custom-banner h3{ font-size:26px; margin-bottom:8px; }
+  .custom-banner p{ font-size:14px; color:#4a4030; max-width:420px; }
+
+  /* ---------- gallery ---------- */
+  .gallery{ display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:16px; }
+  .gallery figure{ margin:0; position:relative; border:2px solid var(--ink); border-radius:6px; overflow:hidden; }
+  .gallery img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .gallery figure:first-child{ grid-row:span 2; }
+  .gallery figure:first-child img{ min-height:340px; }
+  .gallery figure img{ min-height:162px; }
+  .gallery figcaption{
+    position:absolute; left:0; right:0; bottom:0;
+    background:linear-gradient(transparent, rgba(33,27,20,0.75));
+    color:var(--paper-light); font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px; padding:20px 14px 10px; letter-spacing:0.3px;
+  }
+  @media (max-width:700px){
+    .gallery{ grid-template-columns:1fr 1fr; }
+    .gallery figure:first-child{ grid-column:span 2; grid-row:auto; }
+    .gallery figure:first-child img{ min-height:220px; }
+  }
+
+  /* ---------- trust strip ---------- */
+  .trust-strip{
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:24px;
+    border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);
+    padding:26px 0;
+  }
+  .trust-item{ display:flex; align-items:center; gap:12px; flex:1; min-width:220px; }
+  .trust-item .ic{ width:38px; height:38px; flex-shrink:0; }
+  .trust-item .t{ font-weight:700; font-size:14.5px; margin-bottom:2px; }
+  .trust-item .s{ font-size:12.5px; color:#5a503f; }
+
+  /* ---------- footer ---------- */
+  footer{ background:var(--ink); color:var(--paper-light); padding:50px 0 26px; margin-top:20px; }
+  .foot-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:36px; margin-bottom:36px; }
+  footer .logo{ color:var(--paper-light); margin-bottom:14px; }
+  footer .logo .crate{ border-color:var(--paper-light); }
+  footer .logo .crate::before, footer .logo .crate::after{ background:var(--paper-light); }
+  footer p.tag{ font-size:13.5px; color:#c9bfa9; max-width:280px; line-height:1.6; }
+  footer h4{ font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#c9bfa9; margin-bottom:14px; }
+  footer ul{ list-style:none; }
+  footer li{ margin-bottom:10px; font-size:13.5px; }
+  footer a{ text-decoration:none; color:#e6ddc8; }
+  footer a:hover{ color:var(--stamp); }
+  .foot-bottom{ border-top:1px solid rgba(255,255,255,0.15); padding-top:20px; font-size:12px; color:#9a8f78; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+
+  /* ---------- floating whatsapp ---------- */
+  .float-wa{
+    position:fixed; bottom:22px; right:22px; z-index:60;
+    background:var(--wa); color:#fff; width:56px; height:56px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; text-decoration:none;
+    box-shadow:0 4px 14px rgba(0,0,0,0.3);
+    border:2px solid var(--ink);
+  }
+  .float-wa svg{ width:28px; height:28px; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width:900px){
+    .hero{ grid-template-columns:1fr; padding-top:40px; }
+    .steps{ grid-template-columns:1fr 1fr; }
+    .step{ border-right:2px dashed var(--board-dark); border-bottom:2px dashed var(--board-dark); }
+    .step:nth-child(2n){ border-right:none; }
+    .products-grid{ grid-template-columns:1fr 1fr; }
+    .foot-grid{ grid-template-columns:1fr; gap:26px; }
+    .nav-links{ display:none; }
+  }
+  @media (max-width:560px){
+    .steps{ grid-template-columns:1fr; }
+    .step{ border-right:none; }
+    .products-grid{ grid-template-columns:1fr; }
+    .custom-banner{ flex-direction:column; align-items:flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <div class="logo"><span class="crate"></span>BOXCRAFT</div>
+    <div class="nav-links">
+      <a href="#sizes">Box sizes</a>
+      <a href="products.html">Full catalog</a>
+      <a href="#how">How to order</a>
+      <a href="#custom">Custom size</a>
+    </div>
+    <a class="nav-cta" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20boxes" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+      WhatsApp
+    </a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div>
+      <span class="eyebrow-stamp">Wholesale &amp; retail — Rajkot</span>
+      <h1>Boxes built to<br>your <span class="accent">exact</span> size.</h1>
+      <p class="lead">Mailers, shipping cartons, gift boxes and jewelry boxes — off the shelf or cut to a size you send us. Send your dimensions on WhatsApp, get a quote same day.</p>
+      <div class="hero-ctas">
+        <a class="stamp-btn" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20boxes" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+          Order on WhatsApp
+        </a>
+        <a class="ghost-link" href="#sizes">See box sizes ↓</a>
+      </div>
+    </div>
+
+    <div class="dieline-wrap">
+      <svg viewBox="0 0 420 360" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="#211B14" stroke-width="2.5">
+          <rect x="130" y="120" width="140" height="120" fill="#F6F0E2"/>
+          <rect x="10" y="120" width="120" height="120" fill="#EDE3D0"/>
+          <rect x="270" y="120" width="120" height="120" fill="#EDE3D0"/>
+          <rect x="130" y="10" width="140" height="110" fill="#EDE3D0"/>
+        </g>
+        <g stroke="#7A5230" stroke-width="1.6" stroke-dasharray="6 5" fill="none">
+          <line x1="130" y1="120" x2="130" y2="240"/>
+          <line x1="270" y1="120" x2="270" y2="240"/>
+          <line x1="130" y1="120" x2="270" y2="120"/>
+          <path d="M10 120 L 40 100 L 100 100 L 130 120"/>
+          <path d="M390 120 L 360 100 L 300 100 L 270 120"/>
+        </g>
+        <line x1="10" y1="270" x2="130" y2="270" stroke="#B98A54" stroke-width="1.5" marker-start="url(#ar)" marker-end="url(#ar)"/>
+        <text x="45" y="290" class="dim-label">L 300mm</text>
+        <line x1="300" y1="120" x2="300" y2="240" stroke="#B98A54" stroke-width="1.5" marker-start="url(#ar)" marker-end="url(#ar)"/>
+        <text x="310" y="185" class="dim-label" transform="rotate(90 310 185)">W 220mm</text>
+        <line x1="140" y1="10" x2="140" y2="115" stroke="#B98A54" stroke-width="1.5" marker-start="url(#ar)" marker-end="url(#ar)"/>
+        <text x="90" y="65" class="dim-label">H 180mm</text>
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6">
+            <circle cx="5" cy="5" r="2" fill="#B98A54"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  </section>
+
+  <div class="foldline"></div>
+
+  <section class="section">
+    <div class="gallery">
+      <figure>
+        <img src="https://images.pexels.com/photos/29653988/pexels-photo-29653988.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Stacked cardboard boxes ready for dispatch">
+        <figcaption>Stock ready for dispatch</figcaption>
+      </figure>
+      <figure>
+        <img src="https://images.pexels.com/photos/7410461/pexels-photo-7410461.jpeg?auto=compress&cs=tinysrgb&w=700" alt="Kraft gift boxes with ribbon">
+        <figcaption>Gift &amp; jewelry finish</figcaption>
+      </figure>
+      <figure>
+        <img src="https://images.pexels.com/photos/4554234/pexels-photo-4554234.jpeg?auto=compress&cs=tinysrgb&w=700" alt="Packing a cardboard box with tape">
+        <figcaption>Packed and sealed on-site</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <div class="foldline"></div>
+
+  <section class="section" id="how">
+    <div class="section-head">
+      <span class="tag">How ordering works</span>
+      <h2>Four steps, one chat window.</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="num mono">01</span>
+        <h3>Send your size</h3>
+        <p>Message us on WhatsApp with length, width and height — or just tell us what you're packing.</p>
+      </div>
+      <div class="step">
+        <span class="num mono">02</span>
+        <h3>Get a quote</h3>
+        <p>We reply same day with price per box, based on quantity and board thickness.</p>
+      </div>
+      <div class="step">
+        <span class="num mono">03</span>
+        <h3>Approve a sample</h3>
+        <p>For custom sizes, we share a photo of the sample box before running the full order.</p>
+      </div>
+      <div class="step">
+        <span class="num mono">04</span>
+        <h3>Boxes at your door</h3>
+        <p>Dispatched within 3–5 working days across Gujarat, faster for standard sizes.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="foldline"></div>
+
+  <section class="section" id="sizes">
+    <div class="section-head">
+      <span class="tag">Ready-made sizes</span>
+      <h2>Pick a size, order in one tap.</h2>
+    </div>
+    <div class="products-grid">
+
+      <div class="box-card">
+        <div class="thumb"><img src="https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Small brown kraft mailer box" loading="lazy"></div>
+        <div class="tag-strip"><span>Mailer box</span><span>Small</span></div>
+        <div class="card-body">
+          <h3>Mailer</h3>
+          <div class="dims mono">150 × 100 × 50 mm</div>
+          <p class="desc">For jewelry, cosmetics and small D2C shipments. 3-ply board, matte finish available.</p>
+          <div class="price-row">
+            <div class="price">₹9<span>per box, min 100</span></div>
+          </div>
+          <a class="mini-order" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20Mailer%20boxes%20(150x100x50mm)" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+            Order this size
+          </a>
+        </div>
+      </div>
+
+      <div class="box-card">
+        <div class="thumb"><img src="https://images.pexels.com/photos/6119143/pexels-photo-6119143.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Brown gift box top view" loading="lazy"></div>
+        <div class="tag-strip"><span>Gift box</span><span>Small–Med</span></div>
+        <div class="card-body">
+          <h3>Gift &amp; jewelry</h3>
+          <div class="dims mono">120 × 120 × 60 mm</div>
+          <p class="desc">Rigid board, magnetic-flap option. Popular for festive and wedding-favour orders.</p>
+          <div class="price-row">
+            <div class="price">₹22<span>per box, min 50</span></div>
+          </div>
+          <a class="mini-order" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20Gift%20boxes%20(120x120x60mm)" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+            Order this size
+          </a>
+        </div>
+      </div>
+
+      <div class="box-card">
+        <div class="thumb"><img src="https://images.pexels.com/photos/7464209/pexels-photo-7464209.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Stack of brown shipping cartons" loading="lazy"></div>
+        <div class="tag-strip"><span>Shipping carton</span><span>Medium</span></div>
+        <div class="card-body">
+          <h3>Shipping</h3>
+          <div class="dims mono">300 × 220 × 180 mm</div>
+          <p class="desc">5-ply corrugated, double-wall option for heavier goods. Our most-ordered size.</p>
+          <div class="price-row">
+            <div class="price">₹28<span>per box, min 50</span></div>
+          </div>
+          <a class="mini-order" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20Shipping%20cartons%20(300x220x180mm)" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+            Order this size
+          </a>
+        </div>
+      </div>
+
+      <div class="box-card">
+        <div class="thumb"><img src="https://images.pexels.com/photos/7410461/pexels-photo-7410461.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Kraft folding box with ribbon" loading="lazy"></div>
+        <div class="tag-strip"><span>Apparel box</span><span>Medium</span></div>
+        <div class="card-body">
+          <h3>Apparel</h3>
+          <div class="dims mono">330 × 250 × 80 mm</div>
+          <p class="desc">Flat-pack folding box for clothing, sarees and bedsheets. Kraft or white board.</p>
+          <div class="price-row">
+            <div class="price">₹18<span>per box, min 100</span></div>
+          </div>
+          <a class="mini-order" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20Apparel%20boxes%20(330x250x80mm)" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+            Order this size
+          </a>
+        </div>
+      </div>
+
+      <div class="box-card">
+        <div class="thumb"><img src="https://images.pexels.com/photos/10834810/pexels-photo-10834810.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Heavy duty cardboard boxes stacked in warehouse" loading="lazy"></div>
+        <div class="tag-strip"><span>Heavy duty</span><span>Large</span></div>
+        <div class="card-body">
+          <h3>Heavy-duty</h3>
+          <div class="dims mono">450 × 350 × 300 mm</div>
+          <p class="desc">7-ply double-wall corrugated for machine parts, appliances and bulk stock moves.</p>
+          <div class="price-row">
+            <div class="price">₹54<span>per box, min 25</span></div>
+          </div>
+          <a class="mini-order" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20Heavy-duty%20boxes%20(450x350x300mm)" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+            Order this size
+          </a>
+        </div>
+      </div>
+
+      <div class="box-card">
+        <div class="thumb"><img src="https://images.pexels.com/photos/29653988/pexels-photo-29653988.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Large stack of cardboard boxes in warehouse" loading="lazy"></div>
+        <div class="tag-strip"><span>Bulk pallet</span><span>X-Large</span></div>
+        <div class="card-body">
+          <h3>Bulk / pallet</h3>
+          <div class="dims mono">600 × 400 × 400 mm</div>
+          <p class="desc">Reinforced edges for pallet stacking and export shipments. Stitched or taped base.</p>
+          <div class="price-row">
+            <div class="price">₹89<span>per box, min 20</span></div>
+          </div>
+          <a class="mini-order" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20Bulk%20pallet%20boxes%20(600x400x400mm)" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+            Order this size
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="custom-banner" id="custom">
+      <div>
+        <h3>Don't see your size?</h3>
+        <p>Send us length, width and height on WhatsApp — we cut custom boxes for any use case, from 1 sample to 10,000 units.</p>
+      </div>
+      <a class="stamp-btn" href="https://wa.me/919999999999?text=Hi%2C%20I%20need%20a%20custom%20size%20box.%20My%20dimensions%20are%3A%20" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+        Send my size
+      </a>
+    </div>
+  </section>
+
+  <div class="foldline"></div>
+
+  <section class="section">
+    <div class="trust-strip">
+      <div class="trust-item">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#211B14" stroke-width="1.8"><path d="M3 12l2-7h14l2 7M3 12v7a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-7M3 12h18"/></svg>
+        <div><div class="t">100+ schools &amp; sellers supplied</div><div class="s">Repeat wholesale buyers across Gujarat</div></div>
+      </div>
+      <div class="trust-item">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#211B14" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <div><div class="t">3–5 day dispatch</div><div class="s">Standard sizes ship faster</div></div>
+      </div>
+      <div class="trust-item">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#211B14" stroke-width="1.8"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg>
+        <div><div class="t">No minimum on samples</div><div class="s">Approve before you commit to bulk</div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="logo"><span class="crate"></span>BOXCRAFT</div>
+        <p class="tag">Custom and standard packaging boxes, made to order and shipped across Gujarat.</p>
+      </div>
+      <div>
+        <h4>Boxes</h4>
+        <ul>
+          <li><a href="products.html">Full catalog</a></li>
+          <li><a href="#sizes">Mailer</a></li>
+          <li><a href="#sizes">Gift &amp; jewelry</a></li>
+          <li><a href="#sizes">Shipping carton</a></li>
+          <li><a href="#custom">Custom size</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="https://wa.me/919999999999" target="_blank" rel="noopener">WhatsApp: +91 99999 99999</a></li>
+          <li><a href="tel:+919999999999">Call: +91 99999 99999</a></li>
+          <li>Rajkot, Gujarat</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 BoxCraft. All rights reserved.</span>
+      <span>Demo built for review — content and prices are placeholders.</span>
+    </div>
+  </div>
+</footer>
+
+<a class="float-wa" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20boxes" target="_blank" rel="noopener" aria-label="Order on WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+</a>
+
+</body>
+</html>
