@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Box Quotation — BoxCraft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  :root{
+    --paper:#EDE3D0;
+    --paper-light:#F6F0E2;
+    --board:#B98A54;
+    --board-dark:#7A5230;
+    --ink:#211B14;
+    --stamp:#BF3B23;
+    --tape:#D9C08B;
+    --line:rgba(33,27,20,0.25);
+    --wa:#3FA047;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{ background:var(--paper); color:var(--ink); font-family:'Work Sans', sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap{max-width:800px; margin:0 auto; padding:0 28px;}
+  h1,h2,h3{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; letter-spacing:0.5px; line-height:1.02;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+  
+  header{ position:sticky; top:0; z-index:50; background:var(--paper-light); border-bottom:2px dashed var(--board-dark); }
+  nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 28px; max-width:1180px; margin:0 auto; }
+  .logo{ display:flex; align-items:center; gap:10px; font-family:'Anton', sans-serif; font-size:22px; letter-spacing:0.5px; text-decoration:none; color:var(--ink); }
+  .logo .crate{ width:34px; height:34px; border:2.5px solid var(--ink); border-radius:3px; position:relative; flex-shrink:0; }
+  .logo .crate::before, .logo .crate::after{ content:""; position:absolute; background:var(--ink); }
+  .logo .crate::before{ top:0; bottom:0; left:50%; width:2px; transform:translateX(-50%); }
+  .logo .crate::after{ left:0; right:0; top:50%; height:2px; transform:translateY(-50%); }
+  .nav-links{display:flex; align-items:center; gap:28px; font-size:14px; font-weight:600;}
+  .nav-links a{text-decoration:none; opacity:0.8; transition:opacity .15s;}
+  .nav-links a:hover{opacity:1;}
+  
+  .page-hero{ padding:48px 0 32px; text-align:center;}
+  .eyebrow-stamp{
+    display:inline-flex; align-items:center; gap:8px;
+    border:2px solid var(--stamp); color:var(--stamp);
+    font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600;
+    letter-spacing:1.5px; text-transform:uppercase;
+    padding:6px 12px; border-radius:3px; transform:rotate(-2deg);
+    margin-bottom:18px;
+  }
+  .page-hero h1{ font-size:clamp(34px,5vw,54px); margin-bottom:14px; }
+  .page-hero p{ font-size:16px; color:#3a3226; margin:0 auto; max-width:560px; line-height:1.6; }
+
+  .form-container {
+    background: var(--paper-light);
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    padding: 40px;
+    margin-bottom: 64px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .form-group {
+    margin-bottom: 24px;
+  }
+
+  .form-group label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--ink);
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 14px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    transition: border-color 0.2s;
+  }
+  
+  .form-control:focus {
+    outline: none;
+    border-color: var(--board-dark);
+    background: #fff;
+  }
+
+  select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23211B14%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat, repeat;
+    background-position: right .7em top 50%, 0 0;
+    background-size: .65em auto, 100%;
+  }
+
+  .dimensions-row {
+    display: flex;
+    gap: 16px;
+  }
+
+  .dimensions-row .form-control {
+    flex: 1;
+    text-align: center;
+  }
+
+  textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--wa);
+    color: #fff;
+    border: 2px solid var(--ink);
+    padding: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .submit-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--ink);
+    background: #368a3d;
+  }
+
+  .submit-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="index.html" class="logo">
+      <div class="crate"></div>
+      BOXCRAFT
+    </a>
+    <div class="nav-links">
+      <a href="products.html">Catalog</a>
+      <a href="index.html#how">How it Works</a>
+      <a href="admin.html">Admin</a>
+    </div>
+  </nav>
+</header>
+
+<div class="wrap">
+  <div class="page-hero">
+    <div class="eyebrow-stamp">Made to Order</div>
+    <h1>Customized Box</h1>
+    <p>Tell us exactly what kind of box you need. Fill out the details below and we will prepare a customized quotation for you instantly on WhatsApp.</p>
+  </div>
+
+  <div class="form-container">
+    <form id="customForm" onsubmit="sendToWhatsApp(event)">
+      
+      <div class="form-group">
+        <label>What type of box do you need?</label>
+        <select id="boxType" class="form-control" required>
+          <option value="" disabled selected>Select box type...</option>
+          <option value="Corrugated Mailer Box">Corrugated Mailer Box</option>
+          <option value="Rigid Gift Box">Rigid Gift Box</option>
+          <option value="Heavy Duty Shipping Box">Heavy Duty Shipping Box</option>
+          <option value="Folding Carton">Folding Carton</option>
+          <option value="Other">Other / Not Sure</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Dimensions (Length × Width × Height in mm)</label>
+        <div class="dimensions-row">
+          <input type="number" id="dimL" class="form-control" placeholder="L (mm)" required>
+          <span style="display:flex;align-items:center;font-weight:bold;color:var(--board-dark);">×</span>
+          <input type="number" id="dimW" class="form-control" placeholder="W (mm)" required>
+          <span style="display:flex;align-items:center;font-weight:bold;color:var(--board-dark);">×</span>
+          <input type="number" id="dimH" class="form-control" placeholder="H (mm)" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Required Quantity (MOQ)</label>
+        <input type="number" id="qty" class="form-control" placeholder="E.g. 500" required>
+      </div>
+
+      <div class="form-group">
+        <label>Print & Color Requirements</label>
+        <select id="printReq" class="form-control" required>
+          <option value="" disabled selected>Select printing option...</option>
+          <option value="Plain Brown (Kraft)">Plain Brown (Kraft)</option>
+          <option value="Plain White">Plain White</option>
+          <option value="Single Color Logo Print">Single Color Logo Print</option>
+          <option value="Full Custom Color Print">Full Custom Color Print</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Additional Details / Special Requirements</label>
+        <textarea id="details" class="form-control" placeholder="Any specific requirements like inner inserts, lamination, specific board thickness, etc."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+        Send Details on WhatsApp
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function sendToWhatsApp(e) {
+    e.preventDefault();
+    
+    var type = document.getElementById('boxType').value;
+    var l = document.getElementById('dimL').value;
+    var w = document.getElementById('dimW').value;
+    var h = document.getElementById('dimH').value;
+    var qty = document.getElementById('qty').value;
+    var printReq = document.getElementById('printReq').value;
+    var details = document.getElementById('details').value;
+
+    var message = "*New Custom Box Inquiry*\n\n";
+    message += "📦 *Box Type:* " + type + "\n";
+    message += "📏 *Dimensions:* " + l + " × " + w + " × " + h + " mm\n";
+    message += "🔢 *Quantity:* " + qty + " pcs\n";
+    message += "🎨 *Print:* " + printReq + "\n";
+    if (details.trim() !== "") {
+      message += "📝 *Additional Details:* " + details + "\n";
+    }
+
+    var encodedMessage = encodeURIComponent(message);
+    var waNumber = "919265472347";
+    
+    window.open("https://wa.me/" + waNumber + "?text=" + encodedMessage, "_blank");
+  }
+</script>
+
+</body>
+</html>
