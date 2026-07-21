@@ -236,14 +236,18 @@
     var printReq = document.getElementById('printReq').value;
     var details = document.getElementById('details').value;
 
-    var message = "*New Custom Box Inquiry*\n\n";
-    message += "📦 *Box Type:* " + type + "\n";
-    message += "📏 *Dimensions:* " + l + " × " + w + " × " + h + " mm\n";
-    message += "🔢 *Quantity:* " + qty + " pcs\n";
-    message += "🎨 *Print:* " + printReq + "\n";
+    var message = "*NEW CUSTOM BOX INQUIRY*\n";
+    message += "----------------------------------------\n\n";
+    message += "*Box Type:*\n" + type + "\n\n";
+    message += "*Dimensions (L×W×H):*\n" + l + " × " + w + " × " + h + " mm\n\n";
+    message += "*Required Quantity:*\n" + qty + " Boxes\n\n";
+    message += "*Print & Color:*\n" + printReq + "\n";
+    
     if (details.trim() !== "") {
-      message += "📝 *Additional Details:* " + details + "\n";
+      message += "\n*Additional Requirements:*\n" + details + "\n";
     }
+    
+    message += "\n----------------------------------------";
 
     var encodedMessage = encodeURIComponent(message);
     var waNumber = "919265472347";
