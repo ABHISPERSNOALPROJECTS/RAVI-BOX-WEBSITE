@@ -262,6 +262,205 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ---------- header right actions & cart icon ---------- */
+  .header-right-actions{ display:flex; align-items:center; gap:12px; }
+  .nav-cart-btn{
+    position:relative; background:var(--paper); border:2px solid var(--ink);
+    border-radius:4px; padding:7px 12px; cursor:pointer; color:var(--ink);
+    display:flex; align-items:center; gap:6px; font-weight:700;
+    box-shadow:2px 2px 0 var(--ink); transition:transform .15s;
+  }
+  .nav-cart-btn:hover{ transform:translate(-1px,-1px); background:var(--tape); }
+  .cart-badge{
+    background:var(--stamp); color:#fff; font-family:'IBM Plex Mono', monospace;
+    font-size:11px; font-weight:700; border-radius:50%; width:18px; height:18px;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .mobile-menu-btn{
+    display:none; flex-direction:column; gap:4px; background:none; border:none; cursor:pointer; padding:4px;
+  }
+  .mobile-menu-btn span{ width:22px; height:2.5px; background:var(--ink); border-radius:2px; }
+
+  /* ---------- pack selector & quantity multiplier ---------- */
+  .pack-selector-wrapper {
+    background: var(--paper-light); border: 2px solid var(--ink); border-radius: 6px;
+    padding: 16px; margin: 18px 0; box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .pack-title {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 700;
+    text-transform: uppercase; color: var(--board-dark); margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .pack-chips {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .pack-chip {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700;
+    padding: 8px 10px; border: 2px solid var(--ink); border-radius: 4px;
+    background: var(--paper); color: var(--ink); cursor: pointer;
+    transition: all 0.15s ease; flex: 1; text-align: center; min-width: 75px;
+  }
+  .pack-chip:hover { background: var(--tape); }
+  .pack-chip.active {
+    background: var(--stamp); color: #fff; border-color: var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  .qty-multiplier-row {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1.5px dashed var(--line); padding-top: 12px; flex-wrap: wrap; gap: 10px;
+  }
+  .qty-stepper {
+    display: flex; align-items: center; border: 2px solid var(--ink); border-radius: 4px;
+    background: #fff; overflow: hidden;
+  }
+  .qty-btn {
+    background: var(--paper-light); border: none; width: 34px; height: 34px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 700;
+    cursor: pointer; color: var(--ink); transition: background 0.15s;
+  }
+  .qty-btn:hover { background: var(--tape); }
+  .qty-val {
+    width: 44px; text-align: center; font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px; font-weight: 700; border: none; outline: none; background: transparent;
+  }
+  .total-units-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700;
+    color: var(--stamp); background: rgba(191, 59, 35, 0.08); padding: 6px 12px;
+    border-radius: 4px; border: 1.5px dashed var(--stamp); display: inline-block;
+  }
+
+  /* ---------- side off-canvas cart drawer ---------- */
+  .cart-overlay {
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background: rgba(33,27,20,0.6); backdrop-filter: blur(2px);
+    z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .cart-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .cart-drawer {
+    position: fixed; top: 0; right: -420px; width: 100%; max-width: 400px; height: 100%;
+    background: var(--paper-light); border-left: 3px solid var(--ink);
+    z-index: 999; display: flex; flex-direction: column;
+    transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: -10px 0 30px rgba(0,0,0,0.25);
+  }
+  .cart-drawer.open { right: 0; }
+  .cart-drawer-header {
+    padding: 20px 24px; border-bottom: 2px dashed var(--board-dark);
+    display: flex; justify-content: space-between; align-items: center; background: var(--paper);
+  }
+  .cart-drawer-header h3 { font-size: 18px; }
+  .cart-close-btn {
+    background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink); font-weight: 700;
+  }
+  .cart-drawer-body {
+    flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;
+  }
+  .cart-item-card {
+    background: var(--paper); border: 2px solid var(--ink); border-radius: 6px;
+    padding: 14px; display: flex; gap: 12px; align-items: center; position: relative;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .cart-item-img {
+    width: 60px; height: 60px; border-radius: 4px; border: 1.5px solid var(--ink);
+    object-fit: cover; background: var(--board); flex-shrink: 0;
+  }
+  .cart-item-info { flex: 1; }
+  .cart-item-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .cart-item-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--board-dark); }
+  .cart-item-price { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13.5px; margin-top: 4px; color: var(--stamp); }
+  .cart-item-remove {
+    background: none; border: none; color: #8a2a18; font-size: 16px; cursor: pointer; font-weight: 700;
+  }
+  .cart-drawer-footer {
+    padding: 20px 24px; border-top: 2px dashed var(--board-dark); background: var(--paper);
+  }
+  .cart-subtotal-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 700; margin-bottom: 8px;
+  }
+  .cart-subtotal-val { font-size: 20px; color: var(--ink); }
+
+  /* ---------- modals (reviews & checkout) ---------- */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(33,27,20,0.7); backdrop-filter: blur(3px);
+    z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .checkout-modal {
+    background: var(--paper-light); border: 2.5px solid var(--ink);
+    border-radius: 8px; width: 100%; max-width: 520px; padding: 28px;
+    box-shadow: 6px 6px 0 var(--ink); animation: popIn 0.25s ease;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* ---------- reviews section & infinite marquee ---------- */
+  .reviews-section {
+    padding: 50px 0 30px; margin-top: 40px; border-top: 2px dashed var(--board-dark);
+  }
+  .reviews-header {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px; margin-bottom: 28px;
+  }
+  .reviews-rating-summary {
+    display: flex; align-items: center; gap: 14px; margin-top: 6px;
+  }
+  .stars { color: #f59e0b; font-size: 18px; letter-spacing: 2px; }
+
+  .marquee-container {
+    overflow: hidden; position: relative; width: 100%; padding: 12px 0 24px;
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  }
+  .marquee-track {
+    display: flex; gap: 20px; width: max-content;
+    animation: marquee 35s linear infinite;
+  }
+  .marquee-container:hover .marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .review-card {
+    width: 320px; flex-shrink: 0; background: var(--paper-light);
+    border: 2px solid var(--ink); border-radius: 8px; padding: 20px;
+    box-shadow: 3px 3px 0 var(--ink); display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .review-user {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .review-avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--board-dark);
+    color: var(--paper-light); font-weight: 700; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--ink); font-family: 'IBM Plex Mono', monospace;
+  }
+  .review-author-name { font-weight: 700; font-size: 14px; color: var(--ink); }
+  .review-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600;
+    color: var(--wa); text-transform: uppercase; background: rgba(63, 160, 71, 0.12);
+    padding: 2px 6px; border-radius: 3px; border: 1px solid var(--wa);
+  }
+  .review-text { font-size: 13.5px; line-height: 1.5; color: #4a4030; font-style: italic; }
+  .review-date { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8a7e6b; margin-top: 10px; }
+
+  @media (max-width: 768px) {
+    .nav-links{ display:none; }
+    .nav-links.active{
+      display:flex; flex-direction:column; position:absolute; top:100%; left:0; right:0;
+      background:var(--paper-light); border-bottom:2px dashed var(--board-dark); padding:16px 28px; gap:16px;
+    }
+    .mobile-menu-btn{ display:flex; }
+  }
+
   /* ---------- suggested catalog ---------- */
   .suggested-section{
     padding:40px 0;
@@ -338,16 +537,29 @@
 <header>
   <nav>
     <a class="logo" href="home.html"><span class="crate"></span>BOXCRAFT</a>
-    <div class="nav-links">
+    <div class="nav-links" id="nav-menu">
       <a href="home.html">Home</a>
       <a href="products.html">Full catalog</a>
       <a href="home.html#how">How to order</a>
       <a href="home.html#custom">Custom size</a>
     </div>
-    <a class="nav-cta" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20boxes" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
-      WhatsApp
-    </a>
+
+    <div class="header-right-actions">
+      <button class="nav-cart-btn" onclick="openCartDrawer()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        <span class="cart-badge" id="header-cart-count">0</span>
+      </button>
+
+      <a class="nav-cta" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20boxes" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+        <span>WhatsApp</span>
+      </a>
+
+      <!-- Mobile Hamburger Button -->
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </nav>
 </header>
 
@@ -389,6 +601,38 @@
       <ul class="specs-list" id="specs-list">
         <!-- Specs populated dynamically -->
       </ul>
+
+      <!-- Pack Size Selector & Multiplier Quantity -->
+      <div class="pack-selector-wrapper">
+        <div class="pack-title">
+          <span>Select Pack Size</span>
+          <span style="color:var(--stamp);" id="pack-price-summary">₹900 Total</span>
+        </div>
+        
+        <div class="pack-chips">
+          <button type="button" class="pack-chip" data-pack="50" onclick="selectPackSize(50)">Pack of 50</button>
+          <button type="button" class="pack-chip active" data-pack="100" onclick="selectPackSize(100)">Pack of 100</button>
+          <button type="button" class="pack-chip" data-pack="200" onclick="selectPackSize(200)">Pack of 200</button>
+          <button type="button" class="pack-chip" data-pack="500" onclick="selectPackSize(500)">Pack of 500</button>
+          <button type="button" class="pack-chip" data-pack="1000" onclick="selectPackSize(1000)">Pack of 1000</button>
+        </div>
+
+        <div class="qty-multiplier-row">
+          <div>
+            <label style="font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:700; text-transform:uppercase; color:#5a503f; display:block; margin-bottom:4px;">Quantity (Packs Multiplier)</label>
+            <div class="qty-stepper">
+              <button type="button" class="qty-btn" onclick="changePackQty(-1)">−</button>
+              <input type="number" id="pack-qty-input" class="qty-val" value="1" min="1" readonly>
+              <button type="button" class="qty-btn" onclick="changePackQty(1)">+</button>
+            </div>
+          </div>
+
+          <div style="text-align:right;">
+            <div style="font-family:'IBM Plex Mono', monospace; font-size:11px; color:#5a503f; font-weight:600; margin-bottom:4px;">TOTAL BOXES</div>
+            <div class="total-units-badge" id="calc-total-units">100 Units</div>
+          </div>
+        </div>
+      </div>
 
       <!-- Primary Action Buttons Row: 1. Add to Cart, 2. Buy Now, 3. Customizable -->
       <div class="primary-action-row">
@@ -452,7 +696,33 @@
 
   <div class="foldline"></div>
 
-  <!-- Alternative suggestions section (niche dusre catalog suggest ho) -->
+  <!-- Customer Reviews & Infinite Marquee Section -->
+  <section class="reviews-section">
+    <div class="reviews-header">
+      <div>
+        <h2 style="font-size:28px; margin-bottom:4px;">Customer Reviews &amp; Ratings</h2>
+        <div class="reviews-rating-summary">
+          <span style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:22px; color:var(--ink);">4.9 / 5</span>
+          <div class="stars">★★★★★</div>
+          <span style="font-size:13px; color:#5a503f;">(Based on 128+ verified buyer reviews)</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:auto; padding:10px 18px; font-size:13px;" onclick="openReviewModal()">
+        ✍ Write a Review
+      </button>
+    </div>
+
+    <!-- Infinite Marquee Slider (Right to Left) -->
+    <div class="marquee-container">
+      <div class="marquee-track" id="marquee-track">
+        <!-- Generated dynamically via JS -->
+      </div>
+    </div>
+  </section>
+
+  <div class="foldline"></div>
+
+  <!-- Alternative suggestions section -->
   <section class="suggested-section">
     <h2>Alternative Products You Might Need</h2>
     <div class="products-grid" id="suggested-grid">
@@ -460,6 +730,87 @@
     </div>
   </section>
 </main>
+
+<!-- Side Off-canvas Cart Overlay & Drawer -->
+<div class="cart-overlay" id="cart-overlay" onclick="closeCartDrawer()"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-drawer-header">
+    <h3>YOUR CART (<span id="cart-drawer-count">0</span>)</h3>
+    <button class="cart-close-btn" onclick="closeCartDrawer()">✕</button>
+  </div>
+  <div class="cart-drawer-body" id="cart-drawer-items">
+    <!-- Cart items rendered dynamically -->
+  </div>
+  <div class="cart-drawer-footer">
+    <div class="cart-subtotal-row">
+      <span>Subtotal</span>
+      <span class="cart-subtotal-val" id="cart-drawer-subtotal">₹0</span>
+    </div>
+    <p style="font-size:11.5px; color:#6a5e4b; margin-bottom:14px;">Taxes and shipping calculated at checkout.</p>
+    <button class="btn btn-primary" onclick="openCheckoutModal()">
+      Proceed to Checkout →
+    </button>
+  </div>
+</div>
+
+<!-- Write a Review Modal -->
+<div class="modal-overlay" id="review-modal">
+  <div class="checkout-modal" style="max-width:460px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1.5px dashed var(--line); padding-bottom:10px;">
+      <h3 style="font-size:22px;">Write a Customer Review</h3>
+      <button onclick="closeReviewModal()" style="background:none; border:none; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+    <form id="review-form" onsubmit="event.preventDefault(); submitUserReview();">
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Your Name</label>
+        <input type="text" id="rev-name" class="form-input" placeholder="e.g. Rahul Sharma" required>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Rating</label>
+        <select id="rev-rating" class="form-input" required>
+          <option value="5">★★★★★ (5 / 5 Excellent)</option>
+          <option value="4">★★★★☆ (4 / 5 Good)</option>
+          <option value="3">★★★☆☆ (3 / 5 Average)</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:18px;">
+        <label>Your Feedback</label>
+        <textarea id="rev-text" class="form-input" rows="4" placeholder="Tell us about box quality, strength, delivery speed..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit Review</button>
+    </form>
+  </div>
+</div>
+
+<!-- Checkout Order Summary Modal -->
+<div class="modal-overlay" id="checkout-modal">
+  <div class="checkout-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1.5px dashed var(--line); padding-bottom:12px;">
+      <h3 style="font-size:22px;">Order Checkout Summary</h3>
+      <button onclick="closeCheckoutModal()" style="background:none; border:none; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+    <div id="checkout-summary-body" style="margin-bottom:18px; font-size:14px; line-height:1.6; max-height:180px; overflow-y:auto; background:var(--paper); padding:12px; border-radius:4px; border:1px solid var(--ink);">
+      <!-- Order items summary -->
+    </div>
+    <form onsubmit="event.preventDefault(); completeCheckoutOrder();">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Full Name</label>
+        <input type="text" id="cust-name" class="form-input" placeholder="Your Name" required>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Phone / WhatsApp Number</label>
+        <input type="tel" id="cust-phone" class="form-input" placeholder="+91 99999 99999" required>
+      </div>
+      <div class="form-group" style="margin-bottom:18px;">
+        <label>Shipping Address</label>
+        <input type="text" id="cust-address" class="form-input" placeholder="City, State, Pincode" required>
+      </div>
+      <button type="submit" class="btn btn-secondary" style="width:100%;">
+        Confirm Order via WhatsApp / Gateway
+      </button>
+    </form>
+  </div>
+</div>
 
 <footer>
   <div class="wrap">
@@ -646,7 +997,65 @@
     });
 
     await generateRelated();
+    updatePackSummary();
+    initReviews();
+    renderCartDrawer();
     window.scrollTo(0, 0);
+  }
+
+  // State for Pack Selector & Cart
+  var selectedPackSize = 100;
+  var selectedPackQty = 1;
+  var defaultReviews = [
+    { name: "Rajesh Patel", rating: 5, date: "2 days ago", text: "BoxCraft mailer boxes are extremely sturdy! Delivered to Surat in 2 days. Quality is top-notch." },
+    { name: "Priya Sharma", rating: 5, date: "1 week ago", text: "Custom sizes fit my jewelry products perfectly. Highly recommended for D2C brands!" },
+    { name: "Vikram Desai", rating: 5, date: "2 weeks ago", text: "Best corrugated box manufacturer in Gujarat. 5-ply cartons handled heavy machine parts easily." },
+    { name: "Anita Mehta", rating: 5, date: "3 weeks ago", text: "Great pricing for bulk orders. The pack of 500 option saved us a lot of money." },
+    { name: "Sanjay Shah", rating: 5, date: "1 month ago", text: "Fast WhatsApp support and seamless ordering. Will definitely order again!" }
+  ];
+
+  function getUnitPriceNumber() {
+    if (!currentProduct || !currentProduct.price) return 9;
+    var num = parseInt(currentProduct.price.toString().replace(/[^0-9]/g, ""));
+    return num || 9;
+  }
+
+  function updatePackSummary() {
+    var totalUnits = selectedPackSize * selectedPackQty;
+    var unitPrice = getUnitPriceNumber();
+    var totalPrice = totalUnits * unitPrice;
+    
+    var unitsBadge = document.getElementById("calc-total-units");
+    var priceBadge = document.getElementById("pack-price-summary");
+
+    if (unitsBadge) unitsBadge.innerText = totalUnits + " Units";
+    if (priceBadge) priceBadge.innerText = "₹" + totalPrice.toLocaleString() + " Total";
+    
+    // Update active class on chips
+    document.querySelectorAll(".pack-chip").forEach(function(chip) {
+      if (parseInt(chip.getAttribute("data-pack")) === selectedPackSize) {
+        chip.classList.add("active");
+      } else {
+        chip.classList.remove("active");
+      }
+    });
+    var inputEl = document.getElementById("pack-qty-input");
+    if (inputEl) inputEl.value = selectedPackQty;
+  }
+
+  function selectPackSize(size) {
+    selectedPackSize = parseInt(size) || 100;
+    updatePackSummary();
+  }
+
+  function changePackQty(delta) {
+    selectedPackQty = Math.max(1, selectedPackQty + delta);
+    updatePackSummary();
+  }
+
+  function toggleMobileMenu() {
+    var menu = document.getElementById("nav-menu");
+    if (menu) menu.classList.toggle("active");
   }
 
   function toggleCustomizer() {
@@ -664,24 +1073,225 @@
     }
   }
 
+  /* Cart Drawer Functions */
+  function openCartDrawer() {
+    renderCartDrawer();
+    var drawer = document.getElementById("cart-drawer");
+    var overlay = document.getElementById("cart-overlay");
+    if (drawer) drawer.classList.add("open");
+    if (overlay) overlay.classList.add("open");
+  }
+
+  function closeCartDrawer() {
+    var drawer = document.getElementById("cart-drawer");
+    var overlay = document.getElementById("cart-overlay");
+    if (drawer) drawer.classList.remove("open");
+    if (overlay) overlay.classList.remove("open");
+  }
+
+  function renderCartDrawer() {
+    var cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    var container = document.getElementById("cart-drawer-items");
+    var countEl = document.getElementById("cart-drawer-count");
+    var subtotalEl = document.getElementById("cart-drawer-subtotal");
+    var headerCountEl = document.getElementById("header-cart-count");
+
+    if (countEl) countEl.innerText = cart.length;
+    if (headerCountEl) headerCountEl.innerText = cart.length;
+
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (cart.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:40px 10px; color:#6a5e4b;"><div style="font-size:36px; margin-bottom:8px;">🛒</div><p>Your cart is empty.</p></div>';
+      if (subtotalEl) subtotalEl.innerText = "₹0";
+      return;
+    }
+
+    var subtotal = 0;
+    cart.forEach(function(item, idx) {
+      var itemTotal = (item.totalPrice || (item.qty * (item.unitPrice || 9)));
+      subtotal += itemTotal;
+
+      var card = document.createElement("div");
+      card.className = "cart-item-card";
+      card.innerHTML = `
+        <img class="cart-item-img" src="${item.img || 'https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg'}" alt="${item.title}">
+        <div class="cart-item-info">
+          <div class="cart-item-title">${item.title}</div>
+          <div class="cart-item-meta">${item.packInfo || (item.qty + ' Units')} • ${item.dims || ''}</div>
+          <div class="cart-item-price">₹${itemTotal.toLocaleString()}</div>
+        </div>
+        <button class="cart-item-remove" onclick="removeCartItem(${idx})">✕</button>
+      `;
+      container.appendChild(card);
+    });
+
+    if (subtotalEl) subtotalEl.innerText = "₹" + subtotal.toLocaleString();
+  }
+
+  function removeCartItem(idx) {
+    var cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    cart.splice(idx, 1);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    renderCartDrawer();
+  }
+
   function handleAddToCart() {
     if (!currentProduct) return;
     var cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    var totalUnits = selectedPackSize * selectedPackQty;
+    var unitPrice = getUnitPriceNumber();
+    var totalPrice = totalUnits * unitPrice;
+
     cart.push({
       id: currentProduct.id,
       title: currentProduct.title,
       dims: currentProduct.dims,
-      price: currentProduct.price,
-      qty: currentProduct.minOrder
+      unitPrice: unitPrice,
+      totalPrice: totalPrice,
+      qty: totalUnits,
+      packInfo: "Pack of " + selectedPackSize + " × " + selectedPackQty + " Qty (" + totalUnits + " boxes)",
+      img: currentProduct.images ? currentProduct.images[0] : ""
     });
+
     localStorage.setItem("cart", JSON.stringify(cart));
-    alert("✓ " + currentProduct.title + " added to Cart!");
+    openCartDrawer();
   }
 
   function handleBuyNow() {
     if (!currentProduct) return;
-    var stdWaMsg = encodeURIComponent("Hi! I want to Buy Now standard " + currentProduct.title + " (" + currentProduct.dims + ", Qty: " + currentProduct.minOrder + ")");
-    window.open("https://wa.me/919999999999?text=" + stdWaMsg, "_blank");
+    openCheckoutModal();
+  }
+
+  /* Checkout Modal */
+  function openCheckoutModal() {
+    var modal = document.getElementById("checkout-modal");
+    var summaryBody = document.getElementById("checkout-summary-body");
+    var cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+    if (summaryBody) {
+      if (cart.length > 0) {
+        var total = 0;
+        var html = '<ul style="padding-left:16px;">';
+        cart.forEach(function(item) {
+          var itemTotal = item.totalPrice || (item.qty * 9);
+          total += itemTotal;
+          html += `<li><strong>${item.title}</strong> — ${item.packInfo || (item.qty + ' units')} (₹${itemTotal.toLocaleString()})</li>`;
+        });
+        html += `</ul><div style="margin-top:10px; font-weight:700; border-top:1px dashed var(--line); padding-top:6px;">Grand Total: ₹${total.toLocaleString()}</div>`;
+        summaryBody.innerHTML = html;
+      } else if (currentProduct) {
+        var totalUnits = selectedPackSize * selectedPackQty;
+        var total = totalUnits * getUnitPriceNumber();
+        summaryBody.innerHTML = `<div><strong>Product:</strong> ${currentProduct.title}</div>
+          <div><strong>Pack Config:</strong> Pack of ${selectedPackSize} × ${selectedPackQty} (${totalUnits} boxes)</div>
+          <div><strong>Dimensions:</strong> ${currentProduct.dims}</div>
+          <div style="margin-top:8px; font-weight:700;">Grand Total: ₹${total.toLocaleString()}</div>`;
+      }
+    }
+    if (modal) modal.classList.add("open");
+  }
+
+  function closeCheckoutModal() {
+    var modal = document.getElementById("checkout-modal");
+    if (modal) modal.classList.remove("open");
+  }
+
+  function completeCheckoutOrder() {
+    var name = document.getElementById("cust-name").value;
+    var phone = document.getElementById("cust-phone").value;
+    var address = document.getElementById("cust-address").value;
+
+    var cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    var summaryText = "";
+    if (cart.length > 0) {
+      cart.forEach(function(item) {
+        summaryText += "• " + item.title + " (" + (item.packInfo || (item.qty + " units")) + ")\n";
+      });
+    } else if (currentProduct) {
+      var totalUnits = selectedPackSize * selectedPackQty;
+      summaryText = "• " + currentProduct.title + " (Pack of " + selectedPackSize + " × " + selectedPackQty + " = " + totalUnits + " units)\n";
+    }
+
+    var waMsg = "ORDER CHECKOUT DETAILS:\n" +
+                "Name: " + name + "\n" +
+                "Phone: " + phone + "\n" +
+                "Address: " + address + "\n\n" +
+                "ITEMS:\n" + summaryText;
+
+    window.open("https://wa.me/919999999999?text=" + encodeURIComponent(waMsg), "_blank");
+    closeCheckoutModal();
+  }
+
+  /* Reviews & Marquee Carousel */
+  function openReviewModal() {
+    var modal = document.getElementById("review-modal");
+    if (modal) modal.classList.add("open");
+  }
+
+  function closeReviewModal() {
+    var modal = document.getElementById("review-modal");
+    if (modal) modal.classList.remove("open");
+  }
+
+  function getStoredReviews() {
+    var stored = localStorage.getItem("product_reviews");
+    if (!stored) return defaultReviews;
+    try { return JSON.parse(stored); } catch (e) { return defaultReviews; }
+  }
+
+  function initReviews() {
+    var track = document.getElementById("marquee-track");
+    if (!track) return;
+    var reviews = getStoredReviews();
+    
+    // Duplicate reviews array for continuous smooth infinite scrolling
+    var displayList = reviews.concat(reviews).concat(reviews);
+    
+    track.innerHTML = "";
+    displayList.forEach(function(rev) {
+      var initials = rev.name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+      var starsStr = "★".repeat(rev.rating || 5);
+      
+      var card = document.createElement("div");
+      card.className = "review-card";
+      card.innerHTML = `
+        <div>
+          <div class="review-user">
+            <div class="review-avatar">${initials}</div>
+            <div>
+              <div class="review-author-name">${rev.name}</div>
+              <span class="review-badge">Verified Buyer</span>
+            </div>
+          </div>
+          <div class="stars" style="font-size:14px; margin-bottom:8px;">${starsStr}</div>
+          <p class="review-text">"${rev.text}"</p>
+        </div>
+        <div class="review-date">${rev.date || 'Recently verified'}</div>
+      `;
+      track.appendChild(card);
+    });
+  }
+
+  function submitUserReview() {
+    var name = document.getElementById("rev-name").value;
+    var rating = parseInt(document.getElementById("rev-rating").value) || 5;
+    var text = document.getElementById("rev-text").value;
+
+    var reviews = getStoredReviews();
+    reviews.unshift({
+      name: name,
+      rating: rating,
+      text: text,
+      date: "Just now"
+    });
+
+    localStorage.setItem("product_reviews", JSON.stringify(reviews));
+    closeReviewModal();
+    initReviews();
+    alert("Thank you! Your review has been published.");
+    document.getElementById("review-form").reset();
   }
 
   async function handleOrderSubmit() {
