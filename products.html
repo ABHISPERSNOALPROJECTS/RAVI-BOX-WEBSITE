@@ -137,6 +137,16 @@
     .catalog-grid{ grid-template-columns:1fr 1fr; }
     .nav-links{ display:none; }
   }
+  @media (max-width:768px){
+    .wrap { padding: 0 16px; }
+    nav { padding: 12px 16px; }
+    .logo { font-size: 19px; }
+    .logo .crate { width: 28px; height: 28px; }
+    .catalog-grid{ grid-template-columns:1fr; gap: 16px; }
+    .filters { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 12px; -webkit-overflow-scrolling: touch; }
+    .filter-btn { flex-shrink: 0; padding: 7px 12px; font-size: 11px; }
+    .page-hero h1 { font-size: 32px; }
+  }
   @media (max-width:560px){
     .catalog-grid{ grid-template-columns:1fr; }
     .cta-banner{ flex-direction:column; align-items:flex-start; }

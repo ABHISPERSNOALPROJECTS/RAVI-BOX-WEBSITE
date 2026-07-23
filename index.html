@@ -243,7 +243,7 @@
 
   /* ---------- responsive ---------- */
   @media (max-width:900px){
-    .hero{ grid-template-columns:1fr; padding-top:40px; }
+    .hero{ grid-template-columns:1fr; padding-top:30px; gap:24px; }
     .steps{ grid-template-columns:1fr 1fr; }
     .step{ border-right:2px dashed var(--board-dark); border-bottom:2px dashed var(--board-dark); }
     .step:nth-child(2n){ border-right:none; }
@@ -252,10 +252,16 @@
     .nav-links{ display:none; }
   }
   @media (max-width:560px){
+    .wrap { padding: 0 16px; }
+    nav { padding: 12px 16px; }
+    .hero h1 { font-size: 34px; }
+    .hero-ctas { flex-direction: column; width: 100%; }
+    .hero-ctas .btn { width: 100%; text-align: center; justify-content: center; }
     .steps{ grid-template-columns:1fr; }
     .step{ border-right:none; }
     .products-grid{ grid-template-columns:1fr; }
-    .custom-banner{ flex-direction:column; align-items:flex-start; }
+    .custom-banner{ flex-direction:column; align-items:flex-start; padding: 24px; }
+    .trust-strip { flex-direction: column; gap: 16px; }
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
