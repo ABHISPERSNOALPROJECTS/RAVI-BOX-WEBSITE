@@ -367,24 +367,38 @@
   var isLive = false;
 
   async function loadDynamicCatalog() {
-    if (typeof SUPABASE_URL !== 'undefined' && isSupabaseConfigured()) {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      isLive = true;
+    var list = [];
+
+    // Try fetching from Node Backend API first
+    try {
+      var apiRes = await fetch(`${API_BASE_URL}/products`);
+      if (apiRes.ok) {
+        var apiData = await apiRes.json();
+        list = apiData.products || [];
+      }
+    } catch (err) {
+      console.warn("Backend API offline, checking Supabase/LocalStorage fallback.");
     }
 
-    var list = [];
-    if (isLive) {
-      try {
-        var { data, error } = await supabase.from('products').select('*');
-        if (!error && data && data.length > 0) {
-          list = data;
-        }
-      } catch(e) {
-        console.error("Supabase load error on catalog:", e);
+    if (list.length === 0) {
+      if (typeof SUPABASE_URL !== 'undefined' && isSupabaseConfigured()) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        isLive = true;
       }
-    } else {
-      var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
-      list = Object.values(mockProds);
+
+      if (isLive) {
+        try {
+          var { data, error } = await supabase.from('products').select('*');
+          if (!error && data && data.length > 0) {
+            list = data;
+          }
+        } catch(e) {
+          console.error("Supabase load error on catalog:", e);
+        }
+      } else {
+        var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
+        list = Object.values(mockProds);
+      }
     }
 
     if (list.length > 0) {

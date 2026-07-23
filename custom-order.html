@@ -224,8 +224,9 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
-  function sendToWhatsApp(e) {
+  async function sendToWhatsApp(e) {
     e.preventDefault();
     
     var type = document.getElementById('boxType').value;
@@ -235,6 +236,25 @@
     var qty = document.getElementById('qty').value;
     var printReq = document.getElementById('printReq').value;
     var details = document.getElementById('details').value;
+
+    // Send order record to backend API
+    try {
+      await fetch(`${API_BASE_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: 'custom',
+          product_title: `Custom: ${type}`,
+          length: Number(l),
+          width: Number(w),
+          height: Number(h),
+          quantity: Number(qty),
+          board_type: printReq
+        })
+      });
+    } catch (err) {
+      console.warn('Backend order recording skipped:', err);
+    }
 
     var message = "*NEW CUSTOM BOX INQUIRY*\n";
     message += "----------------------------------------\n\n";

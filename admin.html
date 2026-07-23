@@ -317,10 +317,16 @@
             </div>
 
             <div class="form-group span-2">
-              <label>Images URLs (Provide 3 high-res photo URLs)</label>
-              <input style="margin-bottom:6px;" class="form-input" type="url" id="prod-img-1" required placeholder="Image URL 1">
-              <input style="margin-bottom:6px;" class="form-input" type="url" id="prod-img-2" required placeholder="Image URL 2">
-              <input class="form-input" type="url" id="prod-img-3" required placeholder="Image URL 3">
+              <label>Product Images (Upload to Cloudflare R2 Storage or Paste Image URL)</label>
+              <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                <input class="form-input" type="file" id="r2-file-input" accept="image/*">
+                <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; font-size:12px; background:var(--board-dark);" onclick="uploadImageToR2()">Upload to R2</button>
+              </div>
+              <div id="r2-upload-status" style="font-size:12px; font-weight:600; margin-bottom:8px; color:var(--board-dark);"></div>
+
+              <input style="margin-bottom:6px;" class="form-input" type="url" id="prod-img-1" required placeholder="Image URL 1 (Auto-filled on R2 Upload)">
+              <input style="margin-bottom:6px;" class="form-input" type="url" id="prod-img-2" placeholder="Image URL 2">
+              <input class="form-input" type="url" id="prod-img-3" placeholder="Image URL 3">
             </div>
           </div>
 
@@ -447,19 +453,29 @@
     
     var orders = [];
 
-    if (isLive) {
-      var response = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (response.error) {
-        tbody.innerHTML = '<tr><td colspan="7" class="error-message">Failed to load orders: ' + response.error.message + '</td></tr>';
-        return;
+    try {
+      var apiRes = await fetch(`${API_BASE_URL}/orders`);
+      if (apiRes.ok) {
+        var apiData = await apiRes.json();
+        orders = apiData.orders || [];
+      } else {
+        throw new Error("Backend API error");
       }
-      orders = response.data;
-    } else {
-      orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
+    } catch (e) {
+      if (isLive) {
+        var response = await supabase
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (response.error) {
+          tbody.innerHTML = '<tr><td colspan="7" class="error-message">Failed to load orders: ' + response.error.message + '</td></tr>';
+          return;
+        }
+        orders = response.data;
+      } else {
+        orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
+      }
     }
 
     tbody.innerHTML = "";
@@ -529,6 +545,37 @@
     }
   }
 
+  // Upload image file directly to Cloudflare R2
+  async function uploadImageToR2() {
+    var fileInput = document.getElementById("r2-file-input");
+    var statusDiv = document.getElementById("r2-upload-status");
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert("Please select an image file first.");
+      return;
+    }
+
+    var file = fileInput.files[0];
+    statusDiv.innerText = "Uploading to Cloudflare R2...";
+    statusDiv.style.color = "var(--ink)";
+
+    try {
+      var result = await uploadFileToBackend(file);
+      statusDiv.innerText = "Uploaded! (" + (result.storage === 'cloudflare-r2' ? "Cloudflare R2" : "Local Storage") + ")";
+      statusDiv.style.color = "var(--wa)";
+      
+      if (!document.getElementById("prod-img-1").value) {
+        document.getElementById("prod-img-1").value = result.url;
+      } else if (!document.getElementById("prod-img-2").value) {
+        document.getElementById("prod-img-2").value = result.url;
+      } else {
+        document.getElementById("prod-img-3").value = result.url;
+      }
+    } catch (err) {
+      statusDiv.innerText = "Upload failed: " + err.message;
+      statusDiv.style.color = "var(--stamp)";
+    }
+  }
+
   // Upload product catalog configuration
   async function handleProductUpload() {
     var feedback = document.getElementById("upload-feedback");
@@ -553,7 +600,7 @@
       document.getElementById("prod-img-1").value,
       document.getElementById("prod-img-2").value,
       document.getElementById("prod-img-3").value
-    ];
+    ].filter(Boolean);
 
     var productPayload = {
       id: id,
@@ -568,6 +615,25 @@
       specs: specs,
       images: images
     };
+
+    // Try posting to Backend API first
+    try {
+      var apiRes = await fetch(`${API_BASE_URL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productPayload)
+      });
+      if (apiRes.ok) {
+        var apiData = await apiRes.json();
+        feedback.innerText = "Product uploaded successfully via Backend API! (" + apiData.source + ")";
+        feedback.style.color = "var(--wa)";
+        document.getElementById("upload-form").reset();
+        document.getElementById("r2-upload-status").innerText = "";
+        return;
+      }
+    } catch (e) {
+      console.warn("Backend API not reachable, falling back to client-side storage.");
+    }
 
     if (isLive) {
       var response = await supabase
@@ -588,7 +654,7 @@
       localProducts[id] = productPayload;
       localStorage.setItem("mock_products", JSON.stringify(localProducts));
       
-      feedback.innerText = "Product saved successfully to LocalStorage! (Will reflect on other pages local-mock session)";
+      feedback.innerText = "Product saved successfully to LocalStorage!";
       feedback.style.color = "var(--wa)";
       document.getElementById("upload-form").reset();
     }
