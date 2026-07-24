@@ -590,30 +590,34 @@
 </a>
 
 <script>
-  var supabase = null;
-  var isLive = false;
+  async function getAllProducts() {
+    var apiProducts = [];
+    try {
+      var res = await fetch(`${API_BASE_URL}/products`);
+      if (res.ok) {
+        var data = await res.json();
+        apiProducts = data.products || [];
+      }
+    } catch (e) {
+      console.warn("API offline, using local fallback");
+    }
+
+    var localMap = JSON.parse(localStorage.getItem("mock_products") || "{}");
+    var localList = Object.values(localMap);
+
+    var combinedMap = {};
+    apiProducts.forEach(function(p) {
+      if (p && p.id) combinedMap[p.id] = p;
+    });
+    localList.forEach(function(p) {
+      if (p && p.id) combinedMap[p.id] = p;
+    });
+
+    return Object.values(combinedMap);
+  }
 
   async function loadDynamicProducts() {
-    if (typeof window.supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined' && isSupabaseConfigured()) {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      isLive = true;
-    }
-
-    var list = [];
-    if (isLive) {
-      try {
-        var { data, error } = await supabase.from('products').select('*');
-        if (!error && data && data.length > 0) {
-          list = data;
-        }
-      } catch(e) {
-        console.error("Supabase load error on home:", e);
-      }
-    } else {
-      // Local Mock DB check
-      var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
-      list = Object.values(mockProds);
-    }
+    var list = await getAllProducts();
 
     if (list.length > 0) {
       var grid = document.querySelector('.products-grid');
