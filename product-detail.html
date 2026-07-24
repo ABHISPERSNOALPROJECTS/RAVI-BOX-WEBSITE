@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Product Details — BoxCraft</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script src="config.js"></script>
@@ -949,17 +950,16 @@
   }
 
   async function renderDetails() {
-    initSupabase();
     var hash = window.location.hash.substring(1);
     if (!hash) hash = "mailer";
     currentProduct = null;
 
-    // Try fetching product detail from Node Backend API first
+    // Try fetching product detail from Node Backend API
     try {
       var apiRes = await fetch(`${API_BASE_URL}/products/${hash}`);
       if (apiRes.ok) {
         var apiData = await apiRes.json();
-        if (apiData.product) {
+        if (apiData && apiData.product) {
           var pData = apiData.product;
           currentProduct = {
             id: pData.id, title: pData.title, tag: pData.tag, sizeCategory: pData.size_category,
@@ -970,37 +970,27 @@
         }
       }
     } catch (err) {
-      console.warn("Backend API offline for product detail, checking fallbacks.");
+      console.warn("Backend API offline for product detail.");
     }
 
+    // Fallback to LocalStorage
     if (!currentProduct) {
-      if (isLive) {
-        try {
-          var { data, error } = await supabase.from("products").select("*").eq("id", hash).single();
-          if (!error && data) {
-            currentProduct = {
-              id: data.id, title: data.title, tag: data.tag, sizeCategory: data.size_category,
-              dims: data.dims, price: data.price, minOrder: data.min_order,
-              defaultThickness: data.default_thickness, desc: data.desc,
-              specs: data.specs, images: data.images || [], videos: data.videos || [], rawDims: parseRawDims(data.dims)
-            };
-          }
-        } catch (e) { console.error("Database load error:", e); }
-      } else {
-        var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
-        if (mockProds[hash]) {
-          var data = mockProds[hash];
-          currentProduct = {
-            id: data.id, title: data.title, tag: data.tag, sizeCategory: data.size_category,
-            dims: data.dims, price: data.price, minOrder: data.min_order,
-            defaultThickness: data.default_thickness, desc: data.desc,
-            specs: data.specs, images: data.images || [], videos: data.videos || [], rawDims: parseRawDims(data.dims)
-          };
-        }
+      var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
+      if (mockProds[hash]) {
+        var data = mockProds[hash];
+        currentProduct = {
+          id: data.id, title: data.title, tag: data.tag, sizeCategory: data.size_category,
+          dims: data.dims, price: data.price, minOrder: data.min_order,
+          defaultThickness: data.default_thickness, desc: data.desc,
+          specs: data.specs, images: data.images || [], videos: data.videos || [], rawDims: parseRawDims(data.dims)
+        };
       }
     }
 
-    if (!currentProduct) currentProduct = productsData[hash] || productsData["mailer"];
+    // Fallback to preset catalog or default mailer
+    if (!currentProduct) {
+      currentProduct = productsData[hash] || productsData["mailer"];
+    }
     document.title = currentProduct.title + " — BoxCraft";
     document.getElementById("product-tag").innerText = currentProduct.tag;
     document.getElementById("product-title").innerText = currentProduct.title;

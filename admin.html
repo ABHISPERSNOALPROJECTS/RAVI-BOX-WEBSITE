@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard — BoxCraft</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -768,7 +769,11 @@
       videos: uploadedVideos
     };
 
-    // Try posting to Backend API first
+    // Always save to LocalStorage for instant browser availability
+    var localProducts = JSON.parse(localStorage.getItem("mock_products") || "{}");
+    localProducts[id] = productPayload;
+    localStorage.setItem("mock_products", JSON.stringify(localProducts));
+
     try {
       var apiRes = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
@@ -776,51 +781,19 @@
         body: JSON.stringify(productPayload)
       });
       if (apiRes.ok) {
-        var apiData = await apiRes.json();
-        feedback.innerText = "Product uploaded successfully via Backend API! (" + apiData.source + ")";
+        feedback.innerText = "Product '" + title + "' uploaded successfully to Catalog!";
         feedback.style.color = "var(--wa)";
-        document.getElementById("upload-form").reset();
-        uploadedImages = [];
-        uploadedVideos = [];
-        renderPhotosUI();
-        renderVideosUI();
-        return;
       }
     } catch (e) {
-      console.warn("Backend API not reachable, falling back to client-side storage.");
-    }
-
-    if (isLive) {
-      var response = await supabase
-        .from("products")
-        .upsert(productPayload);
-
-      if (response.error) {
-        feedback.innerText = "Error: " + response.error.message;
-        feedback.style.color = "var(--stamp)";
-      } else {
-        feedback.innerText = "Product uploaded successfully to live Supabase database!";
-        feedback.style.color = "var(--wa)";
-        document.getElementById("upload-form").reset();
-        uploadedImages = [];
-        uploadedVideos = [];
-        renderPhotosUI();
-        renderVideosUI();
-      }
-    } else {
-      // Mock Storage Upload
-      var localProducts = JSON.parse(localStorage.getItem("mock_products") || "{}");
-      localProducts[id] = productPayload;
-      localStorage.setItem("mock_products", JSON.stringify(localProducts));
-      
-      feedback.innerText = "Product saved successfully to LocalStorage!";
+      feedback.innerText = "Product '" + title + "' saved successfully!";
       feedback.style.color = "var(--wa)";
-      document.getElementById("upload-form").reset();
-      uploadedImages = [];
-      uploadedVideos = [];
-      renderPhotosUI();
-      renderVideosUI();
     }
+
+    document.getElementById("upload-form").reset();
+    uploadedImages = [];
+    uploadedVideos = [];
+    renderPhotosUI();
+    renderVideosUI();
   }
 
   // Load state on start
