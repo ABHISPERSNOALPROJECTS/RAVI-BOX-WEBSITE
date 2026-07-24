@@ -1,5 +1,7 @@
 // BoxCraft Configuration
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+  ? "http://localhost:5000/api"
+  : "/api";
 const SUPABASE_URL = "YOUR_SUPABASE_URL";
 const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 

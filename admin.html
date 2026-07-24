@@ -466,7 +466,7 @@
   // Initialize Supabase if keys exist, else configure mock localstorage databases
   function initSupabase() {
     var statusBadge = document.getElementById("status-container");
-    if (typeof window.supabase !== 'undefined' && isSupabaseConfigured()) {
+    if (typeof window.supabase !== 'undefined' && typeof isSupabaseConfigured === 'function' && isSupabaseConfigured()) {
       supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       isLive = true;
       statusBadge.innerHTML = '<span class="status-badge status-live">● DATABASE LIVE</span>';
