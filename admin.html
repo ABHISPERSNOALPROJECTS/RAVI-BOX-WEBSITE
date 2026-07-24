@@ -855,14 +855,62 @@
     container.innerHTML = html;
   }
 
+  // Compress large photo files to max 1200px & 0.75 JPEG quality to prevent QuotaExceededError
+  function compressImageFile(file) {
+    return new Promise(function(resolve) {
+      if (!file || !file.type || !file.type.startsWith('image/')) {
+        return resolve(file);
+      }
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var canvas = document.createElement('canvas');
+          var maxDim = 1200;
+          var width = img.width;
+          var height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(function(blob) {
+            if (!blob) return resolve(file);
+            var compressedFile = new File([blob], (file.name || 'image').replace(/\.[^/.]+$/, ".jpg"), {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(compressedFile);
+          }, 'image/jpeg', 0.75);
+        };
+        img.onerror = function() { resolve(file); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function() { resolve(file); };
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handlePhotoSelect(input) {
     if (!input.files || input.files.length === 0) return;
-    var file = input.files[0];
+    var rawFile = input.files[0];
     isUploadingPhoto = true;
     renderPhotosUI();
 
     try {
-      var result = await uploadFileToBackend(file);
+      var fileToUpload = await compressImageFile(rawFile);
+      var result = await uploadFileToBackend(fileToUpload);
       if (result && result.url) {
         uploadedImages.push(result.url);
       }
@@ -901,6 +949,24 @@
   function removeVideo(idx) {
     uploadedVideos.splice(idx, 1);
     renderVideosUI();
+  }
+
+  function saveToLocalStorageSafe(id, payload) {
+    try {
+      var localProducts = JSON.parse(localStorage.getItem("mock_products") || "{}");
+      localProducts[id] = payload;
+      localStorage.setItem("mock_products", JSON.stringify(localProducts));
+    } catch (quotaErr) {
+      console.warn("LocalStorage quota reached. Trimming old data for browser cache.");
+      try {
+        localStorage.removeItem("mock_products");
+        var freshMap = {};
+        freshMap[id] = payload;
+        localStorage.setItem("mock_products", JSON.stringify(freshMap));
+      } catch (e2) {
+        console.warn("Could not write to LocalStorage, product saved to backend API.");
+      }
+    }
   }
 
   // Upload or Update product catalog configuration
@@ -944,10 +1010,8 @@
       videos: uploadedVideos
     };
 
-    // Save to LocalStorage
-    var localProducts = JSON.parse(localStorage.getItem("mock_products") || "{}");
-    localProducts[id] = productPayload;
-    localStorage.setItem("mock_products", JSON.stringify(localProducts));
+    // Save to LocalStorage safely without QuotaExceededError
+    saveToLocalStorageSafe(id, productPayload);
 
     try {
       var apiRes = await fetch(`${API_BASE_URL}/products`, {
