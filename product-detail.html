@@ -966,7 +966,7 @@
             id: pData.id, title: pData.title, tag: pData.tag, sizeCategory: pData.size_category,
             dims: pData.dims, price: pData.price, minOrder: pData.min_order,
             defaultThickness: pData.default_thickness, desc: pData.desc,
-            specs: pData.specs, images: pData.images, rawDims: parseRawDims(pData.dims)
+            specs: pData.specs, images: pData.images || [], videos: pData.videos || [], rawDims: parseRawDims(pData.dims)
           };
         }
       }
@@ -983,7 +983,7 @@
               id: data.id, title: data.title, tag: data.tag, sizeCategory: data.size_category,
               dims: data.dims, price: data.price, minOrder: data.min_order,
               defaultThickness: data.default_thickness, desc: data.desc,
-              specs: data.specs, images: data.images, rawDims: parseRawDims(data.dims)
+              specs: data.specs, images: data.images || [], videos: data.videos || [], rawDims: parseRawDims(data.dims)
             };
           }
         } catch (e) { console.error("Database load error:", e); }
@@ -995,7 +995,7 @@
             id: data.id, title: data.title, tag: data.tag, sizeCategory: data.size_category,
             dims: data.dims, price: data.price, minOrder: data.min_order,
             defaultThickness: data.default_thickness, desc: data.desc,
-            specs: data.specs, images: data.images, rawDims: parseRawDims(data.dims)
+            specs: data.specs, images: data.images || [], videos: data.videos || [], rawDims: parseRawDims(data.dims)
           };
         }
       }
@@ -1024,21 +1024,58 @@
       specsUl.appendChild(li);
     });
 
-    var mainImg = document.getElementById("main-image");
-    mainImg.src = currentProduct.images[0] || "https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg";
-    mainImg.alt = currentProduct.title;
+    var activeView = document.getElementById("active-view");
     var thumbsRow = document.getElementById("thumbs-row");
     thumbsRow.innerHTML = "";
-    currentProduct.images.forEach(function(imgUrl, idx) {
+
+    var allMedia = [];
+    (currentProduct.images || []).forEach(function(url) {
+      if (url) allMedia.push({ type: 'image', url: url });
+    });
+    (currentProduct.videos || []).forEach(function(url) {
+      if (url) allMedia.push({ type: 'video', url: url });
+    });
+
+    if (allMedia.length === 0) {
+      allMedia.push({ type: 'image', url: 'https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg' });
+    }
+
+    function showMedia(mediaItem) {
+      if (mediaItem.type === 'video') {
+        activeView.innerHTML = '<video src="' + mediaItem.url + '" controls autoplay muted style="width:100%; height:100%; object-fit:cover; border-radius:4px;"></video>';
+      } else {
+        activeView.innerHTML = '<img id="main-image" src="' + mediaItem.url + '" alt="' + currentProduct.title + '" style="width:100%; height:100%; object-fit:cover;">';
+      }
+    }
+
+    // Show first media item by default
+    showMedia(allMedia[0]);
+
+    allMedia.forEach(function(item, idx) {
       var thumbDiv = document.createElement("div");
       thumbDiv.className = "gallery-thumb" + (idx === 0 ? " active" : "");
-      var img = document.createElement("img");
-      img.src = imgUrl;
-      thumbDiv.appendChild(img);
+      thumbDiv.style.position = "relative";
+
+      if (item.type === 'video') {
+        var vid = document.createElement("video");
+        vid.src = item.url;
+        vid.muted = true;
+        vid.preload = "metadata";
+        thumbDiv.appendChild(vid);
+        var badge = document.createElement("div");
+        badge.innerHTML = "🎬";
+        badge.style.cssText = "position:absolute; bottom:2px; right:2px; background:rgba(0,0,0,0.7); font-size:10px; padding:1px 3px; border-radius:2px;";
+        thumbDiv.appendChild(badge);
+      } else {
+        var img = document.createElement("img");
+        img.src = item.url;
+        thumbDiv.appendChild(img);
+      }
+
       thumbDiv.addEventListener("click", function() {
         document.querySelectorAll(".gallery-thumb").forEach(function(el) { el.classList.remove("active"); });
         thumbDiv.classList.add("active");
-        mainImg.src = imgUrl;
+        showMedia(item);
       });
       thumbsRow.appendChild(thumbDiv);
     });

@@ -9,7 +9,7 @@ const { isR2Configured, uploadToR2 } = require('../r2Service');
 const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for high quality photos and videos
 });
 
 // Ensure local fallback uploads dir exists

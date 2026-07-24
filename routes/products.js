@@ -65,6 +65,7 @@ router.post('/', async (req, res) => {
       desc: req.body.desc || '',
       specs: Array.isArray(req.body.specs) ? req.body.specs : (req.body.specs ? req.body.specs.split('\n').filter(Boolean) : []),
       images: Array.isArray(req.body.images) ? req.body.images : (req.body.images ? [req.body.images] : []),
+      videos: Array.isArray(req.body.videos) ? req.body.videos : (req.body.videos ? [req.body.videos] : []),
       created_at: new Date().toISOString()
     };
 

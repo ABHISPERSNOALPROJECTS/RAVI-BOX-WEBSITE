@@ -178,6 +178,116 @@
     grid-column:span 2;
   }
   
+  /* Media Dynamic Upload Styles */
+  .media-upload-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .media-preview-tile {
+    position: relative;
+    width: 105px;
+    height: 105px;
+    border: 2.5px solid var(--ink);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--paper-light);
+    box-shadow: 3px 3px 0 var(--ink);
+    flex-shrink: 0;
+  }
+  .media-preview-tile img, .media-preview-tile video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .media-tile-delete {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: var(--stamp);
+    color: #fff;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    box-shadow: 1px 1px 0 var(--ink);
+    transition: transform 0.15s ease;
+  }
+  .media-tile-delete:hover {
+    transform: scale(1.15);
+  }
+  .media-add-tile {
+    width: 105px;
+    height: 105px;
+    border: 2.5px dashed var(--board-dark);
+    border-radius: 6px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--board-dark);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    padding: 6px;
+    flex-shrink: 0;
+  }
+  .media-add-tile:hover {
+    background: var(--paper-light);
+    border-color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .media-add-tile svg {
+    width: 26px;
+    height: 26px;
+    margin-bottom: 4px;
+    fill: currentColor;
+  }
+  .media-loading-tile {
+    width: 105px;
+    height: 105px;
+    border: 2.5px solid var(--ink);
+    border-radius: 6px;
+    background: var(--paper-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--board-dark);
+    flex-shrink: 0;
+  }
+  .spinner-icon {
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--tape);
+    border-top-color: var(--stamp);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 6px;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
   @media (max-width:900px){
     .dashboard-wrapper{ grid-template-columns:1fr; }
     .sidebar{ flex-direction:row; flex-wrap:wrap; }
@@ -316,17 +426,28 @@
               <textarea class="form-input" id="prod-specs" required rows="4" placeholder="e.g.&#10;3-ply corrugated board, 300 GSM&#10;Eco-friendly, 100% recyclable&#10;Tape-free flap closure"></textarea>
             </div>
 
+            <!-- Dynamic Photo Upload Section (Up to 10 photos) -->
             <div class="form-group span-2">
-              <label>Product Images (Upload to Cloudflare R2 Storage or Paste Image URL)</label>
-              <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
-                <input class="form-input" type="file" id="r2-file-input" accept="image/*">
-                <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; font-size:12px; background:var(--board-dark);" onclick="uploadImageToR2()">Upload to R2</button>
+              <label style="display:flex; justify-content:space-between; align-items:center;">
+                <span>PRODUCT PHOTOS (UPLOAD UP TO 10 PHOTOS)</span>
+                <span id="photo-count-badge" class="mono" style="font-size:11px; color:var(--board-dark); font-weight:700;">(0/10 uploaded)</span>
+              </label>
+              <p style="font-size:12px; color:#5a503f; margin-bottom:4px;">Upload photos directly. After each photo upload, another slot will open beside it ("baju me").</p>
+              <div class="media-upload-grid" id="photos-upload-container">
+                <!-- Rendered dynamically -->
               </div>
-              <div id="r2-upload-status" style="font-size:12px; font-weight:600; margin-bottom:8px; color:var(--board-dark);"></div>
+            </div>
 
-              <input style="margin-bottom:6px;" class="form-input" type="url" id="prod-img-1" required placeholder="Image URL 1 (Auto-filled on R2 Upload)">
-              <input style="margin-bottom:6px;" class="form-input" type="url" id="prod-img-2" placeholder="Image URL 2">
-              <input class="form-input" type="url" id="prod-img-3" placeholder="Image URL 3">
+            <!-- Dynamic Video Upload Section (Up to 10 videos) -->
+            <div class="form-group span-2" style="margin-top:10px;">
+              <label style="display:flex; justify-content:space-between; align-items:center;">
+                <span>PRODUCT VIDEOS (UPLOAD UP TO 10 VIDEOS - OPTIONAL)</span>
+                <span id="video-count-badge" class="mono" style="font-size:11px; color:var(--board-dark); font-weight:700;">(0/10 uploaded)</span>
+              </label>
+              <p style="font-size:12px; color:#5a503f; margin-bottom:4px;">Upload product videos directly. After each video upload, another slot will open beside it ("baju me").</p>
+              <div class="media-upload-grid" id="videos-upload-container">
+                <!-- Rendered dynamically -->
+              </div>
             </div>
           </div>
 
@@ -425,6 +546,8 @@
     document.getElementById("login-section").style.display = "none";
     document.getElementById("dashboard-section").style.display = "grid";
     loadOrders();
+    renderPhotosUI();
+    renderVideosUI();
   }
 
   // Navigation tabs switcher
@@ -443,6 +566,8 @@
     } else if (tabId === "upload") {
       event.target.classList.add("active");
       document.getElementById("sec-upload").classList.add("active");
+      renderPhotosUI();
+      renderVideosUI();
     }
   }
 
@@ -545,35 +670,127 @@
     }
   }
 
-  // Upload image file directly to Cloudflare R2
-  async function uploadImageToR2() {
-    var fileInput = document.getElementById("r2-file-input");
-    var statusDiv = document.getElementById("r2-upload-status");
-    if (!fileInput.files || fileInput.files.length === 0) {
-      alert("Please select an image file first.");
-      return;
+  // State for dynamic media uploads
+  var uploadedImages = [];
+  var uploadedVideos = [];
+  var isUploadingPhoto = false;
+  var isUploadingVideo = false;
+
+  function renderPhotosUI() {
+    var container = document.getElementById("photos-upload-container");
+    var badge = document.getElementById("photo-count-badge");
+    if (!container) return;
+
+    badge.innerText = "(" + uploadedImages.length + "/10 uploaded)";
+    var html = "";
+
+    // Render uploaded image tiles
+    uploadedImages.forEach(function(url, idx) {
+      html += '<div class="media-preview-tile">' +
+                '<img src="' + url + '" alt="Photo ' + (idx + 1) + '">' +
+                '<button type="button" class="media-tile-delete" onclick="removePhoto(' + idx + ')" title="Remove photo">✕</button>' +
+              '</div>';
+    });
+
+    // Render uploading state tile if in progress
+    if (isUploadingPhoto) {
+      html += '<div class="media-loading-tile">' +
+                '<div class="spinner-icon"></div>' +
+                '<span>Uploading...</span>' +
+              '</div>';
+    } else if (uploadedImages.length < 10) {
+      // Render next + Upload Photo tile right beside ("baju me")
+      html += '<label class="media-add-tile">' +
+                '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
+                '<span>+ Upload Photo</span>' +
+                '<input type="file" accept="image/*" style="display:none;" onchange="handlePhotoSelect(this)">' +
+              '</label>';
     }
 
-    var file = fileInput.files[0];
-    statusDiv.innerText = "Uploading to Cloudflare R2...";
-    statusDiv.style.color = "var(--ink)";
+    container.innerHTML = html;
+  }
+
+  function renderVideosUI() {
+    var container = document.getElementById("videos-upload-container");
+    var badge = document.getElementById("video-count-badge");
+    if (!container) return;
+
+    badge.innerText = "(" + uploadedVideos.length + "/10 uploaded)";
+    var html = "";
+
+    // Render uploaded video tiles
+    uploadedVideos.forEach(function(url, idx) {
+      html += '<div class="media-preview-tile">' +
+                '<video src="' + url + '" muted playsinline preload="metadata"></video>' +
+                '<div style="position:absolute; bottom:4px; left:4px; background:rgba(0,0,0,0.7); color:#fff; font-size:9px; padding:2px 4px; border-radius:3px; font-family:monospace;">🎬 VIDEO</div>' +
+                '<button type="button" class="media-tile-delete" onclick="removeVideo(' + idx + ')" title="Remove video">✕</button>' +
+              '</div>';
+    });
+
+    // Render uploading state tile if in progress
+    if (isUploadingVideo) {
+      html += '<div class="media-loading-tile">' +
+                '<div class="spinner-icon"></div>' +
+                '<span>Uploading...</span>' +
+              '</div>';
+    } else if (uploadedVideos.length < 10) {
+      // Render next + Upload Video tile right beside ("baju me")
+      html += '<label class="media-add-tile">' +
+                '<svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>' +
+                '<span>+ Upload Video</span>' +
+                '<input type="file" accept="video/*" style="display:none;" onchange="handleVideoSelect(this)">' +
+              '</label>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  async function handlePhotoSelect(input) {
+    if (!input.files || input.files.length === 0) return;
+    var file = input.files[0];
+    isUploadingPhoto = true;
+    renderPhotosUI();
 
     try {
       var result = await uploadFileToBackend(file);
-      statusDiv.innerText = "Uploaded! (" + (result.storage === 'cloudflare-r2' ? "Cloudflare R2" : "Local Storage") + ")";
-      statusDiv.style.color = "var(--wa)";
-      
-      if (!document.getElementById("prod-img-1").value) {
-        document.getElementById("prod-img-1").value = result.url;
-      } else if (!document.getElementById("prod-img-2").value) {
-        document.getElementById("prod-img-2").value = result.url;
-      } else {
-        document.getElementById("prod-img-3").value = result.url;
+      if (result && result.url) {
+        uploadedImages.push(result.url);
       }
     } catch (err) {
-      statusDiv.innerText = "Upload failed: " + err.message;
-      statusDiv.style.color = "var(--stamp)";
+      alert("Photo upload failed: " + err.message);
+    } finally {
+      isUploadingPhoto = false;
+      renderPhotosUI();
     }
+  }
+
+  async function handleVideoSelect(input) {
+    if (!input.files || input.files.length === 0) return;
+    var file = input.files[0];
+    isUploadingVideo = true;
+    renderVideosUI();
+
+    try {
+      var result = await uploadFileToBackend(file);
+      if (result && result.url) {
+        uploadedVideos.push(result.url);
+      }
+    } catch (err) {
+      alert("Video upload failed: " + err.message);
+    } finally {
+      isUploadingVideo = false;
+      renderVideosUI();
+    }
+  }
+
+  function removePhoto(idx) {
+    uploadedImages.splice(idx, 1);
+    renderPhotosUI();
+  }
+
+  function removeVideo(idx) {
+    uploadedVideos.splice(idx, 1);
+    renderVideosUI();
   }
 
   // Upload product catalog configuration
@@ -581,6 +798,13 @@
     var feedback = document.getElementById("upload-feedback");
     feedback.innerText = "Uploading box details...";
     feedback.style.color = "var(--ink)";
+
+    if (uploadedImages.length === 0) {
+      alert("Please upload at least 1 product photo.");
+      feedback.innerText = "Error: Please upload at least 1 product photo.";
+      feedback.style.color = "var(--stamp)";
+      return;
+    }
 
     var id = document.getElementById("prod-id").value.trim().toLowerCase();
     var title = document.getElementById("prod-title").value;
@@ -594,13 +818,6 @@
     
     // Parse specs array (split by newlines)
     var specs = document.getElementById("prod-specs").value.split("\n").filter(function(s) { return s.trim() !== ""; });
-    
-    // Extract images list
-    var images = [
-      document.getElementById("prod-img-1").value,
-      document.getElementById("prod-img-2").value,
-      document.getElementById("prod-img-3").value
-    ].filter(Boolean);
 
     var productPayload = {
       id: id,
@@ -613,7 +830,8 @@
       default_thickness: thickness,
       desc: desc,
       specs: specs,
-      images: images
+      images: uploadedImages,
+      videos: uploadedVideos
     };
 
     // Try posting to Backend API first
@@ -628,7 +846,10 @@
         feedback.innerText = "Product uploaded successfully via Backend API! (" + apiData.source + ")";
         feedback.style.color = "var(--wa)";
         document.getElementById("upload-form").reset();
-        document.getElementById("r2-upload-status").innerText = "";
+        uploadedImages = [];
+        uploadedVideos = [];
+        renderPhotosUI();
+        renderVideosUI();
         return;
       }
     } catch (e) {
@@ -647,6 +868,10 @@
         feedback.innerText = "Product uploaded successfully to live Supabase database!";
         feedback.style.color = "var(--wa)";
         document.getElementById("upload-form").reset();
+        uploadedImages = [];
+        uploadedVideos = [];
+        renderPhotosUI();
+        renderVideosUI();
       }
     } else {
       // Mock Storage Upload
@@ -657,6 +882,10 @@
       feedback.innerText = "Product saved successfully to LocalStorage!";
       feedback.style.color = "var(--wa)";
       document.getElementById("upload-form").reset();
+      uploadedImages = [];
+      uploadedVideos = [];
+      renderPhotosUI();
+      renderVideosUI();
     }
   }
 
