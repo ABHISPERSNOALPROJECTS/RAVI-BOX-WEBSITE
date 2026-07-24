@@ -166,6 +166,7 @@
     cursor:pointer; background:#fff; margin-right:4px;
   }
   .action-btn-complete{ background:var(--wa); color:#fff; }
+  .action-btn-edit{ background:var(--board-dark); color:#fff; }
   .action-btn-delete{ background:var(--stamp); color:#fff; }
   .action-btn:hover{ opacity:0.9; }
 
@@ -328,8 +329,9 @@
   <div class="dashboard-wrapper" id="dashboard-section" style="display:none;">
     <!-- Sidebar navigation -->
     <div class="sidebar">
-      <div class="sidebar-tab active" onclick="switchTab('orders')">Orders Logs</div>
-      <div class="sidebar-tab" onclick="switchTab('upload')">Add Product</div>
+      <div class="sidebar-tab active" id="tab-btn-orders" onclick="switchTab('orders')">Orders Logs</div>
+      <div class="sidebar-tab" id="tab-btn-catalog" onclick="switchTab('catalog')">Manage Catalog</div>
+      <div class="sidebar-tab" id="tab-btn-upload" onclick="switchTab('upload')">+ Add / Edit Product</div>
       <div class="sidebar-tab btn-logout" onclick="handleLogout()" style="color:#fff; text-align:center; margin-top:20px;">Logout</div>
     </div>
 
@@ -360,10 +362,40 @@
         </div>
       </div>
 
-      <!-- Section: Upload Product -->
+      <!-- Section: Catalog Products (Manage & Edit Old Products) -->
+      <div class="dashboard-section" id="sec-catalog">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px dashed var(--line); padding-bottom:12px; margin-bottom:18px;">
+          <h2>Manage Box Catalog</h2>
+          <button class="btn" style="width:auto; margin:0; padding:8px 16px; font-size:12px;" onclick="startAddProduct()">+ Add New Product</button>
+        </div>
+        <p style="font-size:14px; color:#5a503f; margin-bottom:18px;">View, edit details/photos/videos, or delete any product from the catalog.</p>
+        
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Media</th>
+                <th>ID / Slug</th>
+                <th>Title &amp; Tag</th>
+                <th>Dimensions</th>
+                <th>Price &amp; MOQ</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="catalog-list">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section: Upload / Edit Product -->
       <div class="dashboard-section" id="sec-upload">
-        <h2>Add Box to Catalog</h2>
-        <p style="font-size:14px; color:#5a503f; margin-bottom:24px;">Upload a new cardboard box configuration. It will automatically reflect live on the website.</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px dashed var(--line); padding-bottom:12px; margin-bottom:20px;">
+          <h2 id="form-heading">Add Box to Catalog</h2>
+          <button type="button" id="btn-cancel-edit" class="btn" style="width:auto; margin:0; padding:8px 16px; font-size:12px; background:var(--ink); display:none;" onclick="cancelEditing()">Cancel / Add New</button>
+        </div>
+        <p style="font-size:14px; color:#5a503f; margin-bottom:24px;" id="form-subtext">Upload a new cardboard box configuration or edit an existing one. Changes reflect live on the website.</p>
         
         <form id="upload-form" onsubmit="event.preventDefault(); handleProductUpload();">
           <div class="product-form-grid">
@@ -450,7 +482,9 @@
             </div>
           </div>
 
-          <button class="btn" type="submit" style="width:240px; margin-top:28px;">Upload to Database</button>
+          <button class="btn" type="submit" id="btn-submit-form" style="width:240px; margin-top:28px;">Upload to Catalog</button>
+          <div id="upload-feedback" style="margin-top:12px; font-weight:600; font-size:14px;"></div>
+        </form>
           <div id="upload-feedback" style="margin-top:12px; font-weight:600; font-size:14px;"></div>
         </form>
       </div>
@@ -499,11 +533,38 @@
     }
   }
 
+  async function getAllProducts() {
+    var apiProducts = [];
+    try {
+      var res = await fetch(`${API_BASE_URL}/products`);
+      if (res.ok) {
+        var data = await res.json();
+        apiProducts = data.products || [];
+      }
+    } catch (e) {
+      console.warn("API offline, using local fallback");
+    }
+
+    var localMap = JSON.parse(localStorage.getItem("mock_products") || "{}");
+    var localList = Object.values(localMap);
+
+    var combinedMap = {};
+    apiProducts.forEach(function(p) {
+      if (p && p.id) combinedMap[p.id] = p;
+    });
+    localList.forEach(function(p) {
+      if (p && p.id) combinedMap[p.id] = p;
+    });
+
+    return Object.values(combinedMap);
+  }
+
   // Display dashboard screen
   function showDashboard() {
     document.getElementById("login-section").style.display = "none";
     document.getElementById("dashboard-section").style.display = "grid";
     loadOrders();
+    loadCatalogList();
     renderPhotosUI();
     renderVideosUI();
   }
@@ -518,14 +579,128 @@
     });
 
     if (tabId === "orders") {
-      event.target.classList.add("active");
+      var tabBtn = document.getElementById("tab-btn-orders");
+      if (tabBtn) tabBtn.classList.add("active");
       document.getElementById("sec-orders").classList.add("active");
       loadOrders();
+    } else if (tabId === "catalog") {
+      var tabBtn = document.getElementById("tab-btn-catalog");
+      if (tabBtn) tabBtn.classList.add("active");
+      document.getElementById("sec-catalog").classList.add("active");
+      loadCatalogList();
     } else if (tabId === "upload") {
-      event.target.classList.add("active");
+      var tabBtn = document.getElementById("tab-btn-upload");
+      if (tabBtn) tabBtn.classList.add("active");
       document.getElementById("sec-upload").classList.add("active");
       renderPhotosUI();
       renderVideosUI();
+    }
+  }
+
+  // Load and display all catalog items in admin table
+  async function loadCatalogList() {
+    var tbody = document.getElementById("catalog-list");
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading catalog items...</td></tr>';
+
+    var products = await getAllProducts();
+    tbody.innerHTML = "";
+
+    if (products.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No products in catalog.</td></tr>';
+      return;
+    }
+
+    products.forEach(function(prod) {
+      var tr = document.createElement("tr");
+      var firstImg = (prod.images && prod.images[0]) || "https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg";
+      var videoCount = (prod.videos && prod.videos.length) || 0;
+
+      tr.innerHTML = 
+        '<td>' +
+          '<div style="position:relative; width:46px; height:46px; border:1.5px solid var(--ink); border-radius:4px; overflow:hidden; background:var(--board);">' +
+            '<img src="' + firstImg + '" style="width:100%; height:100%; object-fit:cover;">' +
+            (videoCount > 0 ? '<div style="position:absolute; bottom:1px; right:1px; background:rgba(0,0,0,0.7); color:#fff; font-size:9px; padding:1px 3px; border-radius:2px;">🎬</div>' : '') +
+          '</div>' +
+        '</td>' +
+        '<td class="mono"><b>' + prod.id + '</b></td>' +
+        '<td><b>' + prod.title + '</b><br><span style="font-size:11px; color:#6a5e4b;">' + (prod.tag || '') + '</span></td>' +
+        '<td class="mono">' + prod.dims + '</td>' +
+        '<td><b>' + prod.price + '</b><br><span style="font-size:11px; color:#6a5e4b;">MOQ: ' + (prod.min_order || prod.minOrder || 50) + '</span></td>' +
+        '<td>' +
+          '<button class="action-btn action-btn-edit" onclick="editProduct(\'' + prod.id + '\')">✏️ Edit</button>' +
+          '<button class="action-btn action-btn-delete" onclick="deleteCatalogProduct(\'' + prod.id + '\', \'' + prod.title.replace(/'/g, "\\'") + '\')">🗑️ Delete</button>' +
+        '</td>';
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Populate form with existing product details for editing
+  async function editProduct(productId) {
+    var products = await getAllProducts();
+    var prod = products.find(function(p) { return p.id === productId; });
+    if (!prod) {
+      alert("Product not found.");
+      return;
+    }
+
+    editingProductId = prod.id;
+    document.getElementById("prod-id").value = prod.id;
+    document.getElementById("prod-id").readOnly = true;
+    document.getElementById("prod-title").value = prod.title || "";
+    document.getElementById("prod-tag").value = prod.tag || "";
+    document.getElementById("prod-category").value = prod.size_category || prod.sizeCategory || "medium";
+    document.getElementById("prod-dims").value = prod.dims || "";
+    document.getElementById("prod-price").value = prod.price || "";
+    document.getElementById("prod-moq").value = prod.min_order || prod.minOrder || 50;
+    document.getElementById("prod-thickness").value = prod.default_thickness || prod.defaultThickness || "3-Ply Standard";
+    document.getElementById("prod-desc").value = prod.desc || "";
+    document.getElementById("prod-specs").value = (prod.specs || []).join("\n");
+
+    uploadedImages = (prod.images || []).slice();
+    uploadedVideos = (prod.videos || []).slice();
+
+    document.getElementById("form-heading").innerText = "Edit Product: " + prod.title;
+    document.getElementById("btn-cancel-edit").style.display = "inline-flex";
+    document.getElementById("btn-submit-form").innerText = "Save / Update Product";
+    document.getElementById("upload-feedback").innerText = "";
+
+    switchTab("upload");
+  }
+
+  function startAddProduct() {
+    cancelEditing();
+    switchTab("upload");
+  }
+
+  function cancelEditing() {
+    editingProductId = null;
+    document.getElementById("upload-form").reset();
+    document.getElementById("prod-id").readOnly = false;
+    document.getElementById("form-heading").innerText = "Add Box to Catalog";
+    document.getElementById("btn-cancel-edit").style.display = "none";
+    document.getElementById("btn-submit-form").innerText = "Upload to Catalog";
+    document.getElementById("upload-feedback").innerText = "";
+    uploadedImages = [];
+    uploadedVideos = [];
+    renderPhotosUI();
+    renderVideosUI();
+  }
+
+  async function deleteCatalogProduct(productId, title) {
+    if (confirm("Are you sure you want to delete product '" + title + "' permanently from catalog?")) {
+      try {
+        await fetch(`${API_BASE_URL}/products/${productId}`, { method: 'DELETE' });
+      } catch (e) {
+        console.warn("API delete failed, removing locally.");
+      }
+
+      var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
+      delete mockProds[productId];
+      localStorage.setItem("mock_products", JSON.stringify(mockProds));
+
+      loadCatalogList();
     }
   }
 
@@ -728,10 +903,10 @@
     renderVideosUI();
   }
 
-  // Upload product catalog configuration
+  // Upload or Update product catalog configuration
   async function handleProductUpload() {
     var feedback = document.getElementById("upload-feedback");
-    feedback.innerText = "Uploading box details...";
+    feedback.innerText = "Saving product details...";
     feedback.style.color = "var(--ink)";
 
     if (uploadedImages.length === 0) {
@@ -769,7 +944,7 @@
       videos: uploadedVideos
     };
 
-    // Always save to LocalStorage for instant browser availability
+    // Save to LocalStorage
     var localProducts = JSON.parse(localStorage.getItem("mock_products") || "{}");
     localProducts[id] = productPayload;
     localStorage.setItem("mock_products", JSON.stringify(localProducts));
@@ -781,7 +956,7 @@
         body: JSON.stringify(productPayload)
       });
       if (apiRes.ok) {
-        feedback.innerText = "Product '" + title + "' uploaded successfully to Catalog!";
+        feedback.innerText = "Product '" + title + "' saved & updated successfully in Catalog!";
         feedback.style.color = "var(--wa)";
       }
     } catch (e) {
@@ -789,11 +964,8 @@
       feedback.style.color = "var(--wa)";
     }
 
-    document.getElementById("upload-form").reset();
-    uploadedImages = [];
-    uploadedVideos = [];
-    renderPhotosUI();
-    renderVideosUI();
+    cancelEditing();
+    loadCatalogList();
   }
 
   // Load state on start
