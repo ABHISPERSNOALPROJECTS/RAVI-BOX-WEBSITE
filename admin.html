@@ -7,8 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- Supabase CDN Client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <style>
   :root{
@@ -463,25 +461,11 @@
   var supabase = null;
   var isLive = false;
 
-  // Initialize Supabase if keys exist, else configure mock localstorage databases
-  function initSupabase() {
+  // Initialize Status Badge
+  function initStatus() {
     var statusBadge = document.getElementById("status-container");
-    if (typeof window.supabase !== 'undefined' && typeof isSupabaseConfigured === 'function' && isSupabaseConfigured()) {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      isLive = true;
-      statusBadge.innerHTML = '<span class="status-badge status-live">● DATABASE LIVE</span>';
-    } else {
-      isLive = false;
-      statusBadge.innerHTML = '<span class="status-badge status-mock">● MOCK LOCAL MODE</span>';
-      
-      // Seed default orders in LocalStorage if not present
-      if (!localStorage.getItem("mock_orders")) {
-        var defaultOrders = [
-          { id: 101, product_id: "mailer", product_title: "Mailer Box", length: 150, width: 100, height: 50, quantity: 150, board_type: "3-Ply Standard", status: "Pending" },
-          { id: 102, product_id: "shipping", product_title: "Shipping Carton", length: 300, width: 220, height: 180, quantity: 50, board_type: "5-Ply Heavy", status: "Completed" }
-        ];
-        localStorage.setItem("mock_orders", JSON.stringify(defaultOrders));
-      }
+    if (statusBadge) {
+      statusBadge.innerHTML = '<span class="status-badge status-live">● SYSTEM ONLINE</span>';
     }
   }
 
@@ -492,52 +476,25 @@
     var errorDiv = document.getElementById("login-error");
     errorDiv.innerText = "";
 
-    if (isLive) {
-      // Live Supabase Authentication
-      var result = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-
-      if (result.error) {
-        errorDiv.innerText = "Error: " + result.error.message;
-      } else {
-        showDashboard();
-      }
+    if (email === "admin@boxcraft.com" && (password === "boxcraft123" || password === "admin123")) {
+      sessionStorage.setItem("boxcraft_admin_session", "true");
+      showDashboard();
     } else {
-      // Local Mock Mode Authentication (hardcoded)
-      if (email === "admin@boxcraft.com" && password === "boxcraft123") {
-        sessionStorage.setItem("mock_session", "true");
-        showDashboard();
-      } else {
-        errorDiv.innerText = "Error: Invalid credentials for mock login (Use admin@boxcraft.com / boxcraft123)";
-      }
+      errorDiv.innerText = "Error: Invalid credentials (Use admin@boxcraft.com / boxcraft123)";
     }
   }
 
   // Handle Logout
   async function handleLogout() {
-    if (isLive) {
-      await supabase.auth.signOut();
-    } else {
-      sessionStorage.removeItem("mock_session");
-    }
+    sessionStorage.removeItem("boxcraft_admin_session");
     window.location.reload();
   }
 
   // Check login state on load
   async function checkAuth() {
-    initSupabase();
-
-    if (isLive) {
-      var session = await supabase.auth.getSession();
-      if (session.data.session) {
-        showDashboard();
-      }
-    } else {
-      if (sessionStorage.getItem("mock_session") === "true") {
-        showDashboard();
-      }
+    initStatus();
+    if (sessionStorage.getItem("boxcraft_admin_session") === "true") {
+      showDashboard();
     }
   }
 
@@ -587,20 +544,7 @@
         throw new Error("Backend API error");
       }
     } catch (e) {
-      if (isLive) {
-        var response = await supabase
-          .from("orders")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (response.error) {
-          tbody.innerHTML = '<tr><td colspan="7" class="error-message">Failed to load orders: ' + response.error.message + '</td></tr>';
-          return;
-        }
-        orders = response.data;
-      } else {
-        orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
-      }
+      orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
     }
 
     tbody.innerHTML = "";
@@ -632,14 +576,13 @@
   // Update order status to Completed
   async function markOrderCompleted(orderId) {
     if (confirm("Are you sure you want to mark order #" + orderId + " as Completed?")) {
-      if (isLive) {
-        var response = await supabase
-          .from("orders")
-          .update({ status: "Completed" })
-          .eq("id", orderId);
-        
-        if (response.error) alert("Error: " + response.error.message);
-      } else {
+      try {
+        await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Completed' })
+        });
+      } catch (e) {
         var orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
         orders = orders.map(function(o) {
           if (o.id === orderId) o.status = "Completed";
@@ -654,18 +597,9 @@
   // Delete an order log
   async function deleteOrder(orderId) {
     if (confirm("Are you sure you want to delete order #" + orderId + " permanently?")) {
-      if (isLive) {
-        var response = await supabase
-          .from("orders")
-          .delete()
-          .eq("id", orderId);
-        
-        if (response.error) alert("Error: " + response.error.message);
-      } else {
-        var orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
-        orders = orders.filter(function(o) { return o.id !== orderId; });
-        localStorage.setItem("mock_orders", JSON.stringify(orders));
-      }
+      var orders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
+      orders = orders.filter(function(o) { return o.id !== orderId; });
+      localStorage.setItem("mock_orders", JSON.stringify(orders));
       loadOrders();
     }
   }

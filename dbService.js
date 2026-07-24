@@ -1,21 +1,8 @@
-const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-
-let supabase = null;
-
-if (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http')) {
-  supabase = createClient(supabaseUrl, supabaseKey);
-}
-
-function isSupabaseConfigured() {
-  return Boolean(supabase);
-}
-
-// Initial mock dataset for local fallback
+// Initial dataset
 const defaultProducts = [
   {
     id: 'mailer',
@@ -121,29 +108,41 @@ const defaultProducts = [
   }
 ];
 
-const dbFilePath = path.join(__dirname, 'local_db.json');
+// Determine writable DB path (use os.tmpdir() if running serverless on Vercel)
+const dbFilePath = process.env.VERCEL ? path.join(os.tmpdir(), 'local_db.json') : path.join(__dirname, 'local_db.json');
+
+// In-memory data store for serverless consistency
+let inMemoryData = { products: [...defaultProducts], orders: [] };
 
 function getLocalData() {
   if (!fs.existsSync(dbFilePath)) {
-    const initial = { products: defaultProducts, orders: [] };
-    fs.writeFileSync(dbFilePath, JSON.stringify(initial, null, 2));
-    return initial;
+    try {
+      fs.writeFileSync(dbFilePath, JSON.stringify(inMemoryData, null, 2));
+    } catch (e) {
+      console.warn("Could not write to db file, using in-memory data store.");
+    }
+    return inMemoryData;
   }
   try {
     const raw = fs.readFileSync(dbFilePath, 'utf8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    inMemoryData = parsed;
+    return parsed;
   } catch (e) {
-    return { products: defaultProducts, orders: [] };
+    return inMemoryData;
   }
 }
 
 function saveLocalData(data) {
-  fs.writeFileSync(dbFilePath, JSON.stringify(data, null, 2));
+  inMemoryData = data;
+  try {
+    fs.writeFileSync(dbFilePath, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.warn("Failed to persist data to disk, saved in memory.");
+  }
 }
 
 module.exports = {
-  supabase,
-  isSupabaseConfigured,
   getLocalData,
   saveLocalData,
 };

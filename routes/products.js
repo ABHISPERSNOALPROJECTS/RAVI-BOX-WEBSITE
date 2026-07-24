@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { supabase, isSupabaseConfigured, getLocalData, saveLocalData } = require('../dbService');
+const { getLocalData, saveLocalData } = require('../dbService');
 
 /**
  * GET /api/products
@@ -8,14 +8,8 @@ const { supabase, isSupabaseConfigured, getLocalData, saveLocalData } = require(
  */
 router.get('/', async (req, res) => {
   try {
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      return res.json({ success: true, source: 'supabase', products: data });
-    } else {
-      const local = getLocalData();
-      return res.json({ success: true, source: 'local', products: local.products });
-    }
+    const local = getLocalData();
+    return res.json({ success: true, source: 'local', products: local.products });
   } catch (err) {
     console.error('Fetch products error:', err);
     res.status(500).json({ error: err.message });
@@ -29,18 +23,12 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const productId = req.params.id;
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('products').select('*').eq('id', productId).single();
-      if (error) throw error;
-      return res.json({ success: true, source: 'supabase', product: data });
-    } else {
-      const local = getLocalData();
-      const product = local.products.find(p => p.id === productId);
-      if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
-      }
-      return res.json({ success: true, source: 'local', product });
+    const local = getLocalData();
+    const product = local.products.find(p => p.id === productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
     }
+    return res.json({ success: true, source: 'local', product });
   } catch (err) {
     console.error('Fetch product detail error:', err);
     res.status(500).json({ error: err.message });
@@ -73,16 +61,16 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Product title is required.' });
     }
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('products').insert([newProduct]).select();
-      if (error) throw error;
-      return res.json({ success: true, source: 'supabase', product: data[0] });
+    const local = getLocalData();
+    // Update if existing or add new
+    const existingIndex = local.products.findIndex(p => p.id === newProduct.id);
+    if (existingIndex >= 0) {
+      local.products[existingIndex] = newProduct;
     } else {
-      const local = getLocalData();
       local.products.unshift(newProduct);
-      saveLocalData(local);
-      return res.json({ success: true, source: 'local', product: newProduct });
     }
+    saveLocalData(local);
+    return res.json({ success: true, source: 'local', product: newProduct });
   } catch (err) {
     console.error('Create product error:', err);
     res.status(500).json({ error: err.message });
@@ -96,16 +84,10 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const productId = req.params.id;
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase.from('products').delete().eq('id', productId);
-      if (error) throw error;
-      return res.json({ success: true, message: `Product ${productId} deleted.` });
-    } else {
-      const local = getLocalData();
-      local.products = local.products.filter(p => p.id !== productId);
-      saveLocalData(local);
-      return res.json({ success: true, message: `Product ${productId} deleted locally.` });
-    }
+    const local = getLocalData();
+    local.products = local.products.filter(p => p.id !== productId);
+    saveLocalData(local);
+    return res.json({ success: true, message: `Product ${productId} deleted.` });
   } catch (err) {
     console.error('Delete product error:', err);
     res.status(500).json({ error: err.message });

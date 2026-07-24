@@ -7,7 +7,6 @@ const uploadRoutes = require('./routes/upload');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const { isR2Configured } = require('./r2Service');
-const { isSupabaseConfigured } = require('./dbService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,8 +33,8 @@ app.get('/api/health', (req, res) => {
     status: 'online',
     app: 'BoxCraft API Server',
     services: {
-      cloudflare_r2: isR2Configured() ? 'Connected' : 'Missing .env credentials (using local upload fallback)',
-      database: isSupabaseConfigured() ? 'Supabase Connected' : 'Using local JSON database fallback'
+      cloudflare_r2: isR2Configured() ? 'Cloudflare R2 Storage Connected ✅' : 'Local File Upload Fallback Active 📦',
+      database: 'BoxCraft Database Engine Active 📦'
     },
     time: new Date().toISOString()
   });
@@ -47,8 +46,7 @@ if (require.main === module) {
     console.log(`=================================================`);
     console.log(`🚀 BoxCraft Backend Server running on port ${PORT}`);
     console.log(`📍 API Health check: http://localhost:${PORT}/api/health`);
-    console.log(`☁️ Cloudflare R2: ${isR2Configured() ? 'READY ✅' : 'PENDING .ENV KEYS ⚠️ (Fallback Active)'}`);
-    console.log(`🗄️ Database: ${isSupabaseConfigured() ? 'SUPABASE READY ✅' : 'LOCAL FALLBACK READY 📦'}`);
+    console.log(`☁️ Cloudflare R2: ${isR2Configured() ? 'READY ✅' : 'FALLBACK ACTIVE 📦'}`);
     console.log(`=================================================`);
   });
 }

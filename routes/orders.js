@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { supabase, isSupabaseConfigured, getLocalData, saveLocalData } = require('../dbService');
+const { getLocalData, saveLocalData } = require('../dbService');
 
 /**
  * GET /api/orders
@@ -8,14 +8,8 @@ const { supabase, isSupabaseConfigured, getLocalData, saveLocalData } = require(
  */
 router.get('/', async (req, res) => {
   try {
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      return res.json({ success: true, source: 'supabase', orders: data });
-    } else {
-      const local = getLocalData();
-      return res.json({ success: true, source: 'local', orders: local.orders });
-    }
+    const local = getLocalData();
+    return res.json({ success: true, source: 'local', orders: local.orders });
   } catch (err) {
     console.error('Fetch orders error:', err);
     res.status(500).json({ error: err.message });
@@ -40,17 +34,11 @@ router.post('/', async (req, res) => {
       created_at: new Date().toISOString()
     };
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('orders').insert([orderData]).select();
-      if (error) throw error;
-      return res.json({ success: true, source: 'supabase', order: data[0] });
-    } else {
-      const local = getLocalData();
-      orderData.id = Date.now();
-      local.orders.unshift(orderData);
-      saveLocalData(local);
-      return res.json({ success: true, source: 'local', order: orderData });
-    }
+    const local = getLocalData();
+    orderData.id = Date.now();
+    local.orders.unshift(orderData);
+    saveLocalData(local);
+    return res.json({ success: true, source: 'local', order: orderData });
   } catch (err) {
     console.error('Create order error:', err);
     res.status(500).json({ error: err.message });
@@ -70,20 +58,14 @@ router.patch('/:id/status', async (req, res) => {
       return res.status(400).json({ error: 'Status is required.' });
     }
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('orders').update({ status }).eq('id', orderId).select();
-      if (error) throw error;
-      return res.json({ success: true, source: 'supabase', order: data[0] });
-    } else {
-      const local = getLocalData();
-      const order = local.orders.find(o => String(o.id) === String(orderId));
-      if (order) {
-        order.status = status;
-        saveLocalData(local);
-        return res.json({ success: true, source: 'local', order });
-      }
-      return res.status(404).json({ error: 'Order not found' });
+    const local = getLocalData();
+    const order = local.orders.find(o => String(o.id) === String(orderId));
+    if (order) {
+      order.status = status;
+      saveLocalData(local);
+      return res.json({ success: true, source: 'local', order });
     }
+    return res.status(404).json({ error: 'Order not found' });
   } catch (err) {
     console.error('Update order status error:', err);
     res.status(500).json({ error: err.message });
