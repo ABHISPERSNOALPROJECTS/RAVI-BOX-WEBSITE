@@ -2,29 +2,14 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const os = require('os');
 const { isR2Configured, uploadToR2 } = require('../r2Service');
 
 // Multer memory storage configuration
 const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for photos and videos
 });
-
-// Writable directory path (safe for both local and Vercel serverless environment)
-const localUploadsDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, '../uploads');
-
-function ensureUploadDir() {
-  try {
-    if (!fs.existsSync(localUploadsDir)) {
-      fs.mkdirSync(localUploadsDir, { recursive: true });
-    }
-  } catch (e) {
-    console.warn("Could not create local upload directory, using Base64 data URL fallback.");
-  }
-}
 
 /**
  * POST /api/upload
@@ -37,7 +22,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     }
 
     if (isR2Configured()) {
-      // Upload to Cloudflare R2
+      // Upload to Cloudflare R2 Storage (returns live R2 CDN HTTPS URL)
       const publicUrl = await uploadToR2(
         req.file.buffer,
         req.file.originalname,
@@ -51,35 +36,23 @@ router.post('/', upload.single('file'), async (req, res) => {
         filename: req.file.originalname,
       });
     } else {
-      // Fallback local or Base64 storage
-      ensureUploadDir();
-      const ext = path.extname(req.file.originalname) || '.png';
-      const localFilename = `${Date.now()}-${Math.random().toString(36).substring(7)}${ext}`;
-      const filePath = path.join(localUploadsDir, localFilename);
-
-      let finalUrl = "";
-      try {
-        fs.writeFileSync(filePath, req.file.buffer);
-        finalUrl = `${req.protocol}://${req.get('host')}/uploads/${localFilename}`;
-      } catch (writeErr) {
-        // Fallback to Base64 data URL if disk write is not available
-        const mime = req.file.mimetype || 'image/png';
-        const base64Data = req.file.buffer.toString('base64');
-        finalUrl = `data:${mime};base64,${base64Data}`;
-      }
+      // HTTPS-safe Data URL fallback (Instant & persistent across Vercel serverless invocations)
+      const mime = req.file.mimetype || 'image/jpeg';
+      const base64Data = req.file.buffer.toString('base64');
+      const dataUrl = `data:${mime};base64,${base64Data}`;
 
       return res.json({
         success: true,
-        storage: 'fallback',
-        url: finalUrl,
-        filename: localFilename,
+        storage: 'data-url-fallback',
+        warning: 'Cloudflare R2 credentials missing in .env, using inline data URL.',
+        url: dataUrl,
+        filename: req.file.originalname || 'uploaded_file',
       });
     }
   } catch (err) {
     console.error('Upload Error:', err);
-    // Safe Base64 fallback so upload request NEVER crashes with 500 error
     if (req.file && req.file.buffer) {
-      const mime = req.file.mimetype || 'image/png';
+      const mime = req.file.mimetype || 'image/jpeg';
       const base64Data = req.file.buffer.toString('base64');
       return res.json({
         success: true,
