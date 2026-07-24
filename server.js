@@ -18,7 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static frontend files and local uploads fallback
 app.use(express.static(path.join(__dirname)));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Favicon 204 handler
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // API Routes
 app.use('/api/upload', uploadRoutes);
