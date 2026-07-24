@@ -26,7 +26,7 @@ router.get('/:id', async (req, res) => {
     const local = getLocalData();
     const product = local.products.find(p => p.id === productId);
     if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
+      return res.json({ success: false, product: null, message: 'Product not found in server DB' });
     }
     return res.json({ success: true, source: 'local', product });
   } catch (err) {
