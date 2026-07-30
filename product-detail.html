@@ -608,7 +608,7 @@
         <span class="cart-badge" id="header-cart-count">0</span>
       </button>
 
-      <a class="nav-cta" href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20order%20boxes" target="_blank" rel="noopener">
+      <a class="nav-cta" href="https://wa.me/919978822762?text=Hi%2C%20I%20want%20to%20order%20boxes" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.92 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.15c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.03 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.05.17-.18.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
         <span>WhatsApp</span>
       </a>
@@ -890,8 +890,8 @@
       <div>
         <h4>Contact</h4>
         <ul>
-          <li><a href="https://wa.me/919999999999" target="_blank" rel="noopener">WhatsApp: +91 99999 99999</a></li>
-          <li><a href="tel:+919999999999">Call: +91 99999 99999</a></li>
+          <li><a href="https://wa.me/919978822762" target="_blank" rel="noopener">WhatsApp: +91 99788 22762</a></li>
+          <li><a href="tel:+919978822762">Call: +91 99788 22762</a></li>
           <li>Rajkot, Gujarat</li>
         </ul>
       </div>
@@ -1284,10 +1284,16 @@
   }
 
   function completeCheckoutOrder() {
-    var name = document.getElementById("cust-name").value;
-    var phone = document.getElementById("cust-phone").value;
-    var address = document.getElementById("cust-address").value;
+    var name = document.getElementById("cust-name").value.trim();
+    var rawPhone = document.getElementById("cust-phone").value.trim();
+    var validPhone = validatePhoneNumber(rawPhone);
 
+    if (!validPhone) {
+      alert("Please enter a valid 10-digit Indian mobile number. Fake or dummy numbers are not allowed.");
+      return;
+    }
+
+    var address = document.getElementById("cust-address").value.trim();
     var cart = JSON.parse(localStorage.getItem("cart") || "[]");
     var summaryText = "";
     if (cart.length > 0) {
@@ -1299,13 +1305,18 @@
       summaryText = "• " + currentProduct.title + " (Pack of " + selectedPackSize + " × " + selectedPackQty + " = " + totalUnits + " units)\n";
     }
 
-    var waMsg = "ORDER CHECKOUT DETAILS:\n" +
-                "Name: " + name + "\n" +
-                "Phone: " + phone + "\n" +
-                "Address: " + address + "\n\n" +
-                "ITEMS:\n" + summaryText;
+    var pageUrl = window.location.href;
+    var waMsg = "*BOXCRAFT ORDER CHECKOUT*\n" +
+                "----------------------------------------\n" +
+                "*Customer Name:* " + name + "\n" +
+                "*Customer Phone:* +91 " + validPhone + "\n" +
+                "*Delivery Address:* " + address + "\n" +
+                "*Page Link:* " + pageUrl + "\n" +
+                "----------------------------------------\n\n" +
+                "*ORDER ITEMS:*\n" + summaryText;
 
-    window.open("https://wa.me/919999999999?text=" + encodeURIComponent(waMsg), "_blank");
+    var waNum = typeof WHATSAPP_NUMBER !== 'undefined' ? WHATSAPP_NUMBER : "919978822762";
+    window.open("https://wa.me/" + waNum + "?text=" + encodeURIComponent(waMsg), "_blank");
     closeCheckoutModal();
   }
 
@@ -1402,12 +1413,19 @@
       localStorage.setItem("mock_orders", JSON.stringify(orders));
     }
 
-    var waMsg = "Hi! I want a custom quote for " + currentProduct.title + ":\n" +
+    var pageUrl = window.location.href;
+    var waMsg = "*CUSTOM BOX QUOTE INQUIRY*\n" +
+                "----------------------------------------\n" +
+                "*Product:* " + currentProduct.title + "\n" +
+                "*Page Link:* " + pageUrl + "\n" +
+                "----------------------------------------\n" +
                 "• Custom Dimensions: " + l + " × " + w + " × " + h + " mm\n" +
                 "• Quantity: " + qty + " units\n" +
-                "• Board Type: " + thickness;
+                "• Board Thickness: " + thickness + "\n" +
+                "----------------------------------------";
 
-    var waUrl = "https://wa.me/919999999999?text=" + encodeURIComponent(waMsg);
+    var waNum = typeof WHATSAPP_NUMBER !== 'undefined' ? WHATSAPP_NUMBER : "919978822762";
+    var waUrl = "https://wa.me/" + waNum + "?text=" + encodeURIComponent(waMsg);
     window.open(waUrl, "_blank");
   }
 

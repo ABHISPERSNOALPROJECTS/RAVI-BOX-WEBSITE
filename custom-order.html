@@ -198,6 +198,17 @@
       </div>
 
       <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="custName" class="form-control" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="form-group">
+        <label>Your Mobile / WhatsApp Number (10 digits)</label>
+        <input type="tel" id="custPhone" class="form-control" placeholder="E.g. 9876543210" required maxlength="10">
+        <div id="phoneError" style="color:var(--stamp); font-size:12px; font-weight:600; margin-top:4px; display:none;"></div>
+      </div>
+
+      <div class="form-group">
         <label>Dimensions (Length × Width × Height in mm)</label>
         <div class="dimensions-row">
           <input type="number" id="dimL" class="form-control" placeholder="L (mm)" required>
@@ -209,7 +220,7 @@
       </div>
 
       <div class="form-group">
-        <label>Required Quantity (MOQ)</label>
+        <label>Required Quantity</label>
         <input type="number" id="qty" class="form-control" placeholder="E.g. 500" required>
       </div>
 
@@ -243,6 +254,22 @@
     e.preventDefault();
     
     var type = document.getElementById('boxType').value;
+    var name = document.getElementById('custName').value.trim();
+    var rawPhone = document.getElementById('custPhone').value.trim();
+    var validPhone = validatePhoneNumber(rawPhone);
+    var phoneErr = document.getElementById('phoneError');
+
+    if (!validPhone) {
+      if (phoneErr) {
+        phoneErr.innerText = "⚠️ Please enter a valid 10-digit mobile number. Fake numbers like 0000000000 or 1234567890 are not allowed.";
+        phoneErr.style.display = "block";
+      }
+      alert("Please enter a valid 10-digit Indian mobile number. Fake or invalid numbers are not allowed.");
+      return;
+    } else if (phoneErr) {
+      phoneErr.style.display = "none";
+    }
+
     var l = document.getElementById('dimL').value;
     var w = document.getElementById('dimW').value;
     var h = document.getElementById('dimH').value;
@@ -257,7 +284,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           product_id: 'custom',
-          product_title: `Custom: ${type}`,
+          product_title: `Custom: ${type} (${name} - ${validPhone})`,
           length: Number(l),
           width: Number(w),
           height: Number(h),
@@ -269,7 +296,12 @@
       console.warn('Backend order recording skipped:', err);
     }
 
+    var pageUrl = window.location.href;
     var message = "*NEW CUSTOM BOX INQUIRY*\n";
+    message += "----------------------------------------\n";
+    message += "*Customer Name:* " + name + "\n";
+    message += "*Customer Mobile:* +91 " + validPhone + "\n";
+    message += "*Page Link:* " + pageUrl + "\n";
     message += "----------------------------------------\n\n";
     message += "*Box Type:*\n" + type + "\n\n";
     message += "*Dimensions (L×W×H):*\n" + l + " × " + w + " × " + h + " mm\n\n";
@@ -283,7 +315,7 @@
     message += "\n----------------------------------------";
 
     var encodedMessage = encodeURIComponent(message);
-    var waNumber = "919265472347";
+    var waNumber = typeof WHATSAPP_NUMBER !== 'undefined' ? WHATSAPP_NUMBER : "919978822762";
     
     window.open("https://wa.me/" + waNumber + "?text=" + encodedMessage, "_blank");
   }
