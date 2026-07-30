@@ -6,6 +6,7 @@ const path = require('path');
 const uploadRoutes = require('./routes/upload');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
+const bannerRoutes = require('./routes/banners');
 const { isR2Configured } = require('./r2Service');
 
 const app = express();
@@ -28,6 +29,7 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.use('/api/upload', uploadRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/banners', bannerRoutes);
 
 /**
  * Health Check & Status Endpoint

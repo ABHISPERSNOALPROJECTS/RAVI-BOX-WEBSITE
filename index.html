@@ -344,7 +344,7 @@
   <div class="foldline"></div>
 
   <section class="section">
-    <div class="gallery">
+    <div class="gallery" id="homepage-category-gallery">
       <figure style="cursor:pointer;" onclick="window.location.href='products.html'">
         <img src="https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Brown Box">
         <figcaption>Brown Box</figcaption>
@@ -677,7 +677,35 @@
     });
   }
 
-  window.addEventListener("load", loadDynamicProducts);
+  async function loadHomepageCategoryBanners() {
+    var gallery = document.getElementById("homepage-category-gallery");
+    if (!gallery) return;
+
+    try {
+      var res = await fetch(`${API_BASE_URL}/banners`);
+      if (res.ok) {
+        var data = await res.json();
+        var banners = data.banners || [];
+        if (banners.length > 0) {
+          var html = "";
+          banners.forEach(function(b) {
+            var targetUrl = b.link || (b.id === 'custom_box' ? 'custom-order.html' : 'products.html');
+            var customBorder = b.id === 'custom_box' ? 'border: 2px solid #B98A54;' : '';
+            html += '<figure style="cursor:pointer; ' + customBorder + '" onclick="window.location.href=\'' + targetUrl + '\'">' +
+                      '<img src="' + b.image + '" alt="' + b.title + '">' +
+                      '<figcaption>' + b.title + '</figcaption>' +
+                    '</figure>';
+          });
+          gallery.innerHTML = html;
+        }
+      }
+    } catch (e) {}
+  }
+
+  window.addEventListener("load", function() {
+    loadDynamicProducts();
+    loadHomepageCategoryBanners();
+  });
 </script>
 
 </body>

@@ -332,6 +332,7 @@
       <div class="sidebar-tab active" id="tab-btn-orders" onclick="switchTab('orders')">Orders Logs</div>
       <div class="sidebar-tab" id="tab-btn-catalog" onclick="switchTab('catalog')">Manage Catalog</div>
       <div class="sidebar-tab" id="tab-btn-upload" onclick="switchTab('upload')">+ Add / Edit Product</div>
+      <div class="sidebar-tab" id="tab-btn-banners" onclick="switchTab('banners')">🖼️ Homepage Banners</div>
       <div class="sidebar-tab btn-logout" onclick="handleLogout()" style="color:#fff; text-align:center; margin-top:20px;">Logout</div>
     </div>
 
@@ -416,16 +417,31 @@
 
             <div class="form-group">
               <label for="prod-category">Size Category</label>
-              <select class="form-input" id="prod-category">
+              <select class="form-input" id="prod-category" onchange="toggleCustomOption('prod-category', 'prod-category-custom-wrap')">
                 <option value="small">Small</option>
                 <option value="medium">Medium</option>
                 <option value="large">Large</option>
+                <option value="custom">+ Add Custom Category...</option>
               </select>
+              <div id="prod-category-custom-wrap" style="display:none; margin-top:8px;">
+                <input class="form-input" type="text" id="prod-category-custom" placeholder="Type custom category (e.g. Extra Large)">
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="prod-dims">Default Dimensions (e.g. 200 × 200 × 80 mm)</label>
-              <input class="form-input" type="text" id="prod-dims" required placeholder="200 × 200 × 80 mm">
+            <div class="form-group span-2">
+              <label>Dimensions (Length × Width × Height & Unit)</label>
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <input class="form-input" type="number" id="prod-dim-l" required placeholder="Length (L)" style="flex:1; min-width:90px;">
+                <span style="font-weight:700; font-family:'IBM Plex Mono', monospace;">×</span>
+                <input class="form-input" type="number" id="prod-dim-w" required placeholder="Width (W)" style="flex:1; min-width:90px;">
+                <span style="font-weight:700; font-family:'IBM Plex Mono', monospace;">×</span>
+                <input class="form-input" type="number" id="prod-dim-h" required placeholder="Height (H)" style="flex:1; min-width:90px;">
+                <select class="form-input" id="prod-dim-unit" style="width:110px;">
+                  <option value="mm">mm</option>
+                  <option value="cm">cm</option>
+                  <option value="inches">inches</option>
+                </select>
+              </div>
             </div>
 
             <div class="form-group">
@@ -434,17 +450,16 @@
             </div>
 
             <div class="form-group">
-              <label for="prod-moq">Minimum Order Quantity (MOQ)</label>
-              <input class="form-input" type="number" id="prod-moq" required placeholder="100">
-            </div>
-
-            <div class="form-group">
               <label for="prod-thickness">Default Board Thickness</label>
-              <select class="form-input" id="prod-thickness">
+              <select class="form-input" id="prod-thickness" onchange="toggleCustomOption('prod-thickness', 'prod-thickness-custom-wrap')">
                 <option value="3-Ply Standard">3-Ply Standard</option>
                 <option value="5-Ply Heavy">5-Ply Heavy</option>
                 <option value="7-Ply Heavy Duty">7-Ply Heavy Duty</option>
+                <option value="custom">+ Add Custom Thickness...</option>
               </select>
+              <div id="prod-thickness-custom-wrap" style="display:none; margin-top:8px;">
+                <input class="form-input" type="text" id="prod-thickness-custom" placeholder="Type custom thickness (e.g. 2-Ply Micro / 400 GSM Kraft)">
+              </div>
             </div>
 
             <div class="form-group span-2">
@@ -485,8 +500,19 @@
           <button class="btn" type="submit" id="btn-submit-form" style="width:240px; margin-top:28px;">Upload to Catalog</button>
           <div id="upload-feedback" style="margin-top:12px; font-weight:600; font-size:14px;"></div>
         </form>
-          <div id="upload-feedback" style="margin-top:12px; font-weight:600; font-size:14px;"></div>
-        </form>
+      </div>
+
+      <!-- Section: Homepage Banners / Category Cards -->
+      <div class="dashboard-section" id="sec-banners">
+        <h2>Homepage Category Cards &amp; Banners</h2>
+        <p style="font-size:14px; color:#5a503f; margin-bottom:20px;">Change photos, titles, and descriptions for the 3 main category cards on the homepage (White Box, Brown Box, Custom Box).</p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:24px;" id="banners-editor-container">
+          <!-- Rendered dynamically via JS -->
+        </div>
+
+        <button class="btn" onclick="saveHomepageBanners()" style="width:240px;">Save Homepage Banners</button>
+        <div id="banners-feedback" style="margin-top:12px; font-weight:600; font-size:14px;"></div>
       </div>
     </div>
   </div>
@@ -589,6 +615,19 @@
       document.getElementById("sec-upload").classList.add("active");
       renderPhotosUI();
       renderVideosUI();
+    } else if (tabId === "banners") {
+      var tabBtn = document.getElementById("tab-btn-banners");
+      if (tabBtn) tabBtn.classList.add("active");
+      document.getElementById("sec-banners").classList.add("active");
+      loadHomepageBanners();
+    }
+  }
+
+  function toggleCustomOption(selectId, wrapId) {
+    var select = document.getElementById(selectId);
+    var wrap = document.getElementById(wrapId);
+    if (select && wrap) {
+      wrap.style.display = (select.value === "custom") ? "block" : "none";
     }
   }
 
@@ -621,7 +660,7 @@
         '<td class="mono"><b>' + prod.id + '</b></td>' +
         '<td><b>' + prod.title + '</b><br><span style="font-size:11px; color:#6a5e4b;">' + (prod.tag || '') + '</span></td>' +
         '<td class="mono">' + prod.dims + '</td>' +
-        '<td><b>' + prod.price + '</b><br><span style="font-size:11px; color:#6a5e4b;">MOQ: ' + (prod.min_order || prod.minOrder || 50) + '</span></td>' +
+        '<td><b>' + prod.price + '</b><br><span style="font-size:11px; color:#6a5e4b;">' + (prod.default_thickness || prod.defaultThickness || '3-Ply') + '</span></td>' +
         '<td>' +
           '<button class="action-btn action-btn-edit" onclick="editProduct(\'' + prod.id + '\')">✏️ Edit</button>' +
           '<button class="action-btn action-btn-delete" onclick="deleteCatalogProduct(\'' + prod.id + '\', \'' + prod.title.replace(/'/g, "\\'") + '\')">🗑️ Delete</button>' +
@@ -645,11 +684,45 @@
     document.getElementById("prod-id").readOnly = true;
     document.getElementById("prod-title").value = prod.title || "";
     document.getElementById("prod-tag").value = prod.tag || "";
-    document.getElementById("prod-category").value = prod.size_category || prod.sizeCategory || "medium";
-    document.getElementById("prod-dims").value = prod.dims || "";
+
+    // Size Category custom handle
+    var cat = prod.size_category || prod.sizeCategory || "medium";
+    if (["small", "medium", "large"].indexOf(cat) >= 0) {
+      document.getElementById("prod-category").value = cat;
+      document.getElementById("prod-category-custom-wrap").style.display = "none";
+    } else {
+      document.getElementById("prod-category").value = "custom";
+      document.getElementById("prod-category-custom-wrap").style.display = "block";
+      document.getElementById("prod-category-custom").value = cat;
+    }
+
+    // Dimensions (L x W x H Unit) parse
+    var match = (prod.dims || "").match(/(\d+)\s*[\x78\xD7xX]\s*(\d+)\s*[\x78\xD7xX]\s*(\d+)\s*([a-zA-Z]+)/);
+    if (match) {
+      document.getElementById("prod-dim-l").value = match[1];
+      document.getElementById("prod-dim-w").value = match[2];
+      document.getElementById("prod-dim-h").value = match[3];
+      document.getElementById("prod-dim-unit").value = match[4].toLowerCase();
+    } else {
+      document.getElementById("prod-dim-l").value = "";
+      document.getElementById("prod-dim-w").value = "";
+      document.getElementById("prod-dim-h").value = "";
+      document.getElementById("prod-dim-unit").value = "mm";
+    }
+
     document.getElementById("prod-price").value = prod.price || "";
-    document.getElementById("prod-moq").value = prod.min_order || prod.minOrder || 50;
-    document.getElementById("prod-thickness").value = prod.default_thickness || prod.defaultThickness || "3-Ply Standard";
+
+    // Board Thickness custom handle
+    var thick = prod.default_thickness || prod.defaultThickness || "3-Ply Standard";
+    if (["3-Ply Standard", "5-Ply Heavy", "7-Ply Heavy Duty"].indexOf(thick) >= 0) {
+      document.getElementById("prod-thickness").value = thick;
+      document.getElementById("prod-thickness-custom-wrap").style.display = "none";
+    } else {
+      document.getElementById("prod-thickness").value = "custom";
+      document.getElementById("prod-thickness-custom-wrap").style.display = "block";
+      document.getElementById("prod-thickness-custom").value = thick;
+    }
+
     document.getElementById("prod-desc").value = prod.desc || "";
     document.getElementById("prod-specs").value = (prod.specs || []).join("\n");
 
@@ -964,7 +1037,7 @@
   // Upload or Update product catalog configuration
   async function handleProductUpload() {
     var feedback = document.getElementById("upload-feedback");
-    feedback.innerText = "Saving product details...";
+    feedback.innerText = "Saving product details to Cloudflare R2...";
     feedback.style.color = "var(--ink)";
 
     if (uploadedImages.length === 0) {
@@ -977,11 +1050,24 @@
     var id = document.getElementById("prod-id").value.trim().toLowerCase();
     var title = document.getElementById("prod-title").value;
     var tag = document.getElementById("prod-tag").value;
-    var category = document.getElementById("prod-category").value;
-    var dims = document.getElementById("prod-dims").value;
+    
+    // Category & custom option
+    var catSelect = document.getElementById("prod-category").value;
+    var category = (catSelect === "custom") ? (document.getElementById("prod-category-custom").value.trim() || "custom") : catSelect;
+    
+    // Dimensions (L x W x H Unit)
+    var dimL = document.getElementById("prod-dim-l").value.trim();
+    var dimW = document.getElementById("prod-dim-w").value.trim();
+    var dimH = document.getElementById("prod-dim-h").value.trim();
+    var dimUnit = document.getElementById("prod-dim-unit").value;
+    var dims = dimL + " × " + dimW + " × " + dimH + " " + dimUnit;
+
     var price = document.getElementById("prod-price").value;
-    var minOrder = parseInt(document.getElementById("prod-moq").value);
-    var thickness = document.getElementById("prod-thickness").value;
+    
+    // Thickness & custom option
+    var thickSelect = document.getElementById("prod-thickness").value;
+    var thickness = (thickSelect === "custom") ? (document.getElementById("prod-thickness-custom").value.trim() || "3-Ply Standard") : thickSelect;
+
     var desc = document.getElementById("prod-desc").value;
     
     // Parse specs array (split by newlines)
@@ -994,7 +1080,6 @@
       size_category: category,
       dims: dims,
       price: price,
-      min_order: minOrder,
       default_thickness: thickness,
       desc: desc,
       specs: specs,
@@ -1022,6 +1107,105 @@
 
     cancelEditing();
     loadCatalogList();
+  }
+
+  // ---------- HOMEPAGE BANNERS & CATEGORY CARDS ----------
+  var currentBanners = [];
+
+  async function loadHomepageBanners() {
+    var container = document.getElementById("banners-editor-container");
+    if (!container) return;
+    container.innerHTML = '<p>Loading homepage banners from Cloudflare R2...</p>';
+
+    try {
+      var res = await fetch(`${API_BASE_URL}/banners`);
+      if (res.ok) {
+        var data = await res.json();
+        currentBanners = data.banners || [];
+      }
+    } catch (e) {
+      console.warn("Could not load banners from backend");
+    }
+
+    if (!currentBanners || currentBanners.length === 0) {
+      currentBanners = [
+        { id: 'white_box', title: 'WHITE KRAFT BOX', subtitle: 'Clean, elegant white corrugated mailer & gift boxes.', image: 'https://images.pexels.com/photos/8015700/pexels-photo-8015700.jpeg?auto=compress&cs=tinysrgb&w=800', link: 'products.html' },
+        { id: 'brown_box', title: 'BROWN KRAFT BOX', subtitle: 'Rustic, eco-friendly 3-ply & 5-ply corrugated shippers.', image: 'https://images.pexels.com/photos/6119143/pexels-photo-6119143.jpeg?auto=compress&cs=tinysrgb&w=800', link: 'products.html' },
+        { id: 'custom_box', title: 'CUSTOMIZE BOX', subtitle: 'Custom length, width, height & logo printing to order.', image: 'https://images.pexels.com/photos/7464209/pexels-photo-7464209.jpeg?auto=compress&cs=tinysrgb&w=800', link: 'custom-order.html' }
+      ];
+    }
+
+    var html = "";
+    currentBanners.forEach(function(b, idx) {
+      html += '<div style="background:var(--paper-light); border:2px solid var(--ink); border-radius:6px; padding:16px; box-shadow:3px 3px 0 var(--ink);">' +
+                '<h3 style="font-size:16px; margin-bottom:10px; font-family:\'Anton\', sans-serif;">Card ' + (idx + 1) + ': ' + (b.title || '') + '</h3>' +
+                '<div style="width:100%; aspect-ratio:4/3; border:2px solid var(--ink); border-radius:4px; overflow:hidden; margin-bottom:12px; background:var(--board); position:relative;">' +
+                  '<img id="banner-img-preview-' + idx + '" src="' + b.image + '" style="width:100%; height:100%; object-fit:cover;">' +
+                '</div>' +
+                '<label class="btn" style="padding:8px 14px; font-size:12px; margin-bottom:14px; display:inline-flex; width:auto; cursor:pointer;">' +
+                  '📷 Change Card Photo' +
+                  '<input type="file" accept="image/*" style="display:none;" onchange="handleBannerPhotoUpload(this, ' + idx + ')">' +
+                '</label>' +
+                '<div class="form-group" style="margin-bottom:10px;">' +
+                  '<label style="font-size:11px;">Card Title</label>' +
+                  '<input class="form-input" style="padding:8px 10px; font-size:13px;" type="text" id="banner-title-' + idx + '" value="' + (b.title || '') + '">' +
+                '</div>' +
+                '<div class="form-group" style="margin-bottom:10px;">' +
+                  '<label style="font-size:11px;">Card Subtitle / Description</label>' +
+                  '<input class="form-input" style="padding:8px 10px; font-size:13px;" type="text" id="banner-subtitle-' + idx + '" value="' + (b.subtitle || '') + '">' +
+                '</div>' +
+              '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  async function handleBannerPhotoUpload(input, idx) {
+    if (!input.files || input.files.length === 0) return;
+    var feedback = document.getElementById("banners-feedback");
+    feedback.innerText = "Uploading banner photo to Cloudflare R2...";
+    feedback.style.color = "var(--ink)";
+    try {
+      var compressed = await compressImageFile(input.files[0]);
+      var result = await uploadFileToBackend(compressed);
+      if (result && result.url) {
+        currentBanners[idx].image = result.url;
+        document.getElementById("banner-img-preview-" + idx).src = result.url;
+        feedback.innerText = "Banner photo uploaded to R2! Click 'Save Homepage Banners' below to publish live.";
+        feedback.style.color = "var(--wa)";
+      }
+    } catch (e) {
+      alert("Failed to upload banner photo: " + e.message);
+    }
+  }
+
+  async function saveHomepageBanners() {
+    var feedback = document.getElementById("banners-feedback");
+    feedback.innerText = "Saving homepage banners to Cloudflare R2...";
+    feedback.style.color = "var(--ink)";
+
+    currentBanners.forEach(function(b, idx) {
+      var titleEl = document.getElementById("banner-title-" + idx);
+      var subEl = document.getElementById("banner-subtitle-" + idx);
+      if (titleEl) b.title = titleEl.value;
+      if (subEl) b.subtitle = subEl.value;
+    });
+
+    try {
+      var res = await fetch(`${API_BASE_URL}/banners`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ banners: currentBanners })
+      });
+      if (res.ok) {
+        feedback.innerText = "Homepage category banners saved & published live in Cloudflare R2!";
+        feedback.style.color = "var(--wa)";
+      } else {
+        throw new Error("Failed to save banners.");
+      }
+    } catch (e) {
+      feedback.innerText = "Error saving banners: " + e.message;
+      feedback.style.color = "var(--stamp)";
+    }
   }
 
   // Load state on start

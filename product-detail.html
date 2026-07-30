@@ -650,8 +650,8 @@
           <div class="price-val" id="product-price">₹9</div>
         </div>
         <div style="text-align:right;">
-          <div class="price-label">Minimum Order Quantity</div>
-          <div class="price-val" style="font-size:20px; font-weight:600;"><span id="product-moq">100</span> units</div>
+          <div class="price-label">Board Thickness</div>
+          <div class="price-val" style="font-size:16px; font-weight:700;" id="product-thickness">3-Ply Standard</div>
         </div>
       </div>
 
@@ -1008,7 +1008,8 @@
     document.getElementById("product-dims").innerText = currentProduct.dims;
     document.getElementById("product-desc").innerText = currentProduct.desc;
     document.getElementById("product-price").innerText = currentProduct.price;
-    document.getElementById("product-moq").innerText = currentProduct.minOrder;
+    var thickEl = document.getElementById("product-thickness");
+    if (thickEl) thickEl.innerText = currentProduct.defaultThickness || "3-Ply Standard";
     document.getElementById("box-l").value = currentProduct.rawDims.l;
     document.getElementById("box-w").value = currentProduct.rawDims.w;
     document.getElementById("box-h").value = currentProduct.rawDims.h;
