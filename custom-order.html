@@ -134,10 +134,14 @@
     box-shadow: 3px 3px 0 var(--ink);
   }
 
-  .submit-btn:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 5px 5px 0 var(--ink);
-    background: #368a3d;
+  .submit-btn svg {
+    width: 22px;
+    height: 22px;
+    max-width: 24px;
+    max-height: 24px;
+    flex-shrink: 0;
+    fill: currentColor;
+    display: inline-block;
   }
 
   body{ background:var(--paper); color:var(--ink); font-family:'Work Sans', sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden; width:100%; }
@@ -170,7 +174,6 @@
     <div class="nav-links">
       <a href="products.html">Catalog</a>
       <a href="index.html#how">How it Works</a>
-      <a href="admin.html">Admin</a>
     </div>
   </nav>
 </header>
