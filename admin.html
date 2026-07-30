@@ -688,14 +688,11 @@
       try {
         await fetch(`${API_BASE_URL}/products/${productId}`, { method: 'DELETE' });
       } catch (e) {
-        console.warn("API delete failed, removing locally.");
+        console.warn("API delete warning:", e);
       }
-
-      var mockProds = JSON.parse(localStorage.getItem("mock_products") || "{}");
-      delete mockProds[productId];
-      localStorage.setItem("mock_products", JSON.stringify(mockProds));
-
-      loadCatalogList();
+      localStorage.removeItem("mock_products");
+      localStorage.removeItem("mock_products_cache");
+      await loadCatalogList();
     }
   }
 
@@ -1005,9 +1002,6 @@
       videos: uploadedVideos
     };
 
-    // Save to LocalStorage safely without QuotaExceededError
-    saveToLocalStorageSafe(id, productPayload);
-
     try {
       var apiRes = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
@@ -1015,12 +1009,15 @@
         body: JSON.stringify(productPayload)
       });
       if (apiRes.ok) {
-        feedback.innerText = "Product '" + title + "' saved & updated successfully in Catalog!";
+        feedback.innerText = "Product '" + title + "' saved & updated successfully in Cloudflare R2 Catalog!";
         feedback.style.color = "var(--wa)";
+      } else {
+        throw new Error("Failed to update server catalog.");
       }
     } catch (e) {
-      feedback.innerText = "Product '" + title + "' saved successfully!";
-      feedback.style.color = "var(--wa)";
+      feedback.innerText = "Error saving product: " + e.message;
+      feedback.style.color = "var(--stamp)";
+      return;
     }
 
     cancelEditing();
