@@ -108,6 +108,8 @@ const defaultProducts = [
   }
 ];
 
+const { saveJsonToR2, getJsonFromR2 } = require('./r2Service');
+
 // Determine writable DB path (use os.tmpdir() if running serverless on Vercel)
 const dbFilePath = process.env.VERCEL ? path.join(os.tmpdir(), 'local_db.json') : path.join(__dirname, 'local_db.json');
 
@@ -133,6 +135,19 @@ function getLocalData() {
   }
 }
 
+async function getLocalDataAsync() {
+  try {
+    const r2Data = await getJsonFromR2('database_catalog.json');
+    if (r2Data && Array.isArray(r2Data.products) && r2Data.products.length > 0) {
+      inMemoryData = r2Data;
+      return r2Data;
+    }
+  } catch (e) {
+    console.warn("Could not fetch database from Cloudflare R2:", e.message);
+  }
+  return getLocalData();
+}
+
 function saveLocalData(data) {
   inMemoryData = data;
   try {
@@ -140,9 +155,21 @@ function saveLocalData(data) {
   } catch (e) {
     console.warn("Failed to persist data to disk, saved in memory.");
   }
+  // Also push to R2 asynchronously
+  saveJsonToR2('database_catalog.json', data).catch(err => {
+    console.warn("Async R2 sync warning:", err.message);
+  });
+}
+
+async function saveLocalDataAsync(data) {
+  inMemoryData = data;
+  saveLocalData(data);
+  await saveJsonToR2('database_catalog.json', data);
 }
 
 module.exports = {
   getLocalData,
+  getLocalDataAsync,
   saveLocalData,
+  saveLocalDataAsync,
 };

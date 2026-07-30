@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getLocalData, saveLocalData } = require('../dbService');
+const { getLocalDataAsync, saveLocalDataAsync } = require('../dbService');
 
 /**
  * GET /api/products
@@ -8,8 +8,8 @@ const { getLocalData, saveLocalData } = require('../dbService');
  */
 router.get('/', async (req, res) => {
   try {
-    const local = getLocalData();
-    return res.json({ success: true, source: 'local', products: local.products });
+    const local = await getLocalDataAsync();
+    return res.json({ success: true, source: 'cloud', products: local.products });
   } catch (err) {
     console.error('Fetch products error:', err);
     res.status(500).json({ error: err.message });
@@ -23,12 +23,12 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const productId = req.params.id;
-    const local = getLocalData();
+    const local = await getLocalDataAsync();
     const product = local.products.find(p => p.id === productId);
     if (!product) {
       return res.json({ success: false, product: null, message: 'Product not found in server DB' });
     }
-    return res.json({ success: true, source: 'local', product });
+    return res.json({ success: true, source: 'cloud', product });
   } catch (err) {
     console.error('Fetch product detail error:', err);
     res.status(500).json({ error: err.message });
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Product title is required.' });
     }
 
-    const local = getLocalData();
+    const local = await getLocalDataAsync();
     // Update if existing or add new
     const existingIndex = local.products.findIndex(p => p.id === newProduct.id);
     if (existingIndex >= 0) {
@@ -69,8 +69,8 @@ router.post('/', async (req, res) => {
     } else {
       local.products.unshift(newProduct);
     }
-    saveLocalData(local);
-    return res.json({ success: true, source: 'local', product: newProduct });
+    await saveLocalDataAsync(local);
+    return res.json({ success: true, source: 'cloud', product: newProduct });
   } catch (err) {
     console.error('Create product error:', err);
     res.status(500).json({ error: err.message });
@@ -84,9 +84,9 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const productId = req.params.id;
-    const local = getLocalData();
+    const local = await getLocalDataAsync();
     local.products = local.products.filter(p => p.id !== productId);
-    saveLocalData(local);
+    await saveLocalDataAsync(local);
     return res.json({ success: true, message: `Product ${productId} deleted.` });
   } catch (err) {
     console.error('Delete product error:', err);
