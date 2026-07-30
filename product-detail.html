@@ -540,7 +540,7 @@
     .nav-cta { padding: 8px; }
 
     .eyebrow-stamp { margin-bottom: 12px; font-size: 11px; }
-    .product-info h1 { font-size: 28px; margin-bottom: 8px; }
+    .product-info h1 { font-size: 28px; margin-bottom: 8px; word-break: break-word; }
     .product-info .dims { font-size: 13.5px; margin-bottom: 14px; }
     
     .price-bar { padding: 12px 14px; gap: 8px; flex-direction: row; justify-content: space-between; }
@@ -551,7 +551,7 @@
       grid-template-columns: 1fr;
       gap: 10px;
     }
-    .btn { padding: 13px; font-size: 13px; min-height: 46px; }
+    .btn { padding: 13px; font-size: 13px; min-height: 46px; width: 100%; box-sizing: border-box; justify-content: center; }
 
     /* Side Cart Drawer Full Mobile */
     .cart-drawer {
@@ -562,20 +562,31 @@
     .reviews-section { padding: 32px 0 20px; margin-top: 24px; }
     .review-card { width: 260px; padding: 16px; }
     .reviews-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .reviews-rating-summary { flex-wrap: wrap; gap: 6px; }
+    .foldline::before { left: 10px; } .foldline::after { right: 10px; }
   }
 
   @media (max-width: 480px){
+    .wrap { padding: 0 12px; }
+    nav { padding: 10px 12px; }
     .products-grid { grid-template-columns: 1fr; }
-    .pack-selector-wrapper { padding: 14px; margin: 14px 0; }
+    .pack-selector-wrapper { padding: 14px 12px; margin: 14px 0; }
+    .pack-title { flex-wrap: wrap; gap: 4px; }
     .pack-chips { gap: 6px; }
-    .pack-chip { padding: 8px 4px; font-size: 11px; min-width: 58px; flex: 1 1 28%; }
-    .qty-multiplier-row { flex-direction: row; justify-content: space-between; align-items: center; }
+    .pack-chip { padding: 8px 4px; font-size: 11px; min-width: 54px; flex: 1 1 28%; }
+    .qty-multiplier-row { flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+
+    .price-bar { padding: 10px 12px; gap: 4px; }
+    .price-bar .price-label { font-size: 11px; }
+    .price-bar .price-val { font-size: 17px; }
 
     .dims-input-row { gap: 4px; }
     .dims-input-row input { padding: 8px 4px; font-size: 13px; text-align: center; }
 
-    .order-builder { padding: 16px; }
+    .order-builder { padding: 16px 12px; }
     .checkout-modal { padding: 20px 16px; width: 94%; max-height: 88vh; overflow-y: auto; }
+    .review-card { width: 250px; padding: 14px; }
+    .foldline::before { left: 8px; } .foldline::after { right: 8px; }
   }
 </style>
 </head>

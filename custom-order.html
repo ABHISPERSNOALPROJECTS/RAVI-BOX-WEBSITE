@@ -140,9 +140,22 @@
     background: #368a3d;
   }
 
-  .submit-btn svg {
-    width: 22px;
-    height: 22px;
+  body{ background:var(--paper); color:var(--ink); font-family:'Work Sans', sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden; width:100%; }
+
+  @media (max-width: 768px){
+    .wrap { padding: 0 16px; }
+    nav { padding: 12px 16px; }
+    .form-container { padding: 24px 20px; margin-bottom: 40px; }
+    .page-hero h1 { font-size: 36px; }
+  }
+
+  @media (max-width: 480px){
+    .wrap { padding: 0 12px; }
+    nav { padding: 10px 12px; }
+    .form-container { padding: 18px 14px; margin-bottom: 28px; }
+    .dimensions-row { flex-direction: column; gap: 10px; }
+    .page-hero h1 { font-size: 28px; }
+    .submit-btn { font-size: 14px; padding: 14px; }
   }
 </style>
 </head>
